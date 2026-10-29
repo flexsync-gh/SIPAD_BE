@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Api\StakeholderController;
+use App\Http\Controllers\Api\SystemSettingController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -55,6 +58,27 @@ $registerRoutes = function () {
         Route::delete('/users/{id}', [UserController::class, 'destroy'])
             ->middleware('role:lecturer,admin')
             ->name('users.destroy');
+    });
+
+    // C. Modul Konfigurasi Sistem & Master Data Role/Skill (Proses 2.0 — Fase 1)
+    Route::middleware('auth:sanctum')->group(function () {
+        // 1. Mengambil parameter konfigurasi dari app_settings (Semua User Login)
+        Route::get('/settings', [SystemSettingController::class, 'index'])->name('settings.index');
+
+        // 2. Memperbarui konfigurasi toggle kewajiban pilihan role ke-2 dan jadwal (Dosen)
+        Route::put('/settings', [SystemSettingController::class, 'update'])
+            ->middleware('role:lecturer,admin')
+            ->name('settings.update');
+
+        // 3. Mengambil daftar 4 roles beserta daftar skills di setiap role (Semua User Login)
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+
+        // 4. Menambah atau mengubah daftar item skillset pada role tertentu (Dosen)
+        Route::middleware('role:lecturer,admin')->group(function () {
+            Route::post('/skills', [SkillController::class, 'store'])->name('skills.store');
+            Route::match(['put', 'patch'], '/skills/{id}', [SkillController::class, 'update'])->name('skills.update');
+            Route::delete('/skills/{id}', [SkillController::class, 'destroy'])->name('skills.destroy');
+        });
     });
 
     // Alias endpoints for backward compatibility with earlier tasks

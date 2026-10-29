@@ -13,8 +13,11 @@ class AppSettingSeeder extends Seeder
     public function run(): void
     {
         $settings = [
+            'is_role_2_required' => 'false',
             'is_role_2_mandatory' => 'false',
             'registration_status' => 'open',
+            'registration_timeline' => 'Periode Pendaftaran: 1 - 14 November 2026',
+            'registration_terms' => 'Mahasiswa aktif peserta KRS PAD dan telah menyelesaikan prasyarat mata kuliah dasar pemrograman.',
             'academic_year' => '2026/2027',
         ];
 
