@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EvaluationController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Api\StakeholderController;
@@ -92,6 +93,33 @@ $registerRoutes = function () {
 
         // 3. Menampilkan pengumuman posisi final, daftar anggota kelompok, pembimbing, dan proyek
         Route::get('/my-team', [StudentProfilingController::class, 'myTeam'])->name('my-team');
+    });
+
+    // E. Modul Evaluasi Skor, Override Dosen & Penguncian Role (Proses 4.0 — Fase 3)
+    Route::middleware('auth:sanctum')->prefix('evaluations')->as('evaluations.')->group(function () {
+        // Akses Dosen & Praktisi
+        Route::middleware('role:lecturer,practitioner')->group(function () {
+            // 1. Rekapitulasi seluruh mahasiswa (support search & filter)
+            Route::get('/', [EvaluationController::class, 'index'])->name('index');
+
+            // 2. Rincian profil untuk Pop-Up Modal Detail
+            Route::get('/{userId}', [EvaluationController::class, 'show'])->name('show');
+
+            // 3. Simpan atau perbarui catatan evaluasi portofolio / rekomendasi role
+            Route::patch('/{userId}/note', [EvaluationController::class, 'updateNote'])->name('note.update');
+        });
+
+        // Akses Khusus Dosen
+        Route::middleware('role:lecturer')->group(function () {
+            // 6. Tombol Lock Final Roles: Mengunci seluruh evaluasi peran mahasiswa
+            Route::post('/lock-all', [EvaluationController::class, 'lockAll'])->name('lock-all');
+
+            // 4. Override final_role_id secara manual oleh dosen
+            Route::patch('/{userId}/override', [EvaluationController::class, 'override'])->name('override');
+
+            // 5. Reset final_role_id ke recommended_role_id saran sistem awal
+            Route::post('/{userId}/reset', [EvaluationController::class, 'reset'])->name('reset');
+        });
     });
 
     // Alias endpoints for backward compatibility with earlier tasks
