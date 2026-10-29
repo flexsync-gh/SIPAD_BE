@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\StakeholderController;
+use App\Http\Controllers\Api\TeamController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,14 +24,47 @@ $registerRoutes = function () {
         });
     });
 
-    // B. Manajemen Stakeholder & Admin Initiation (Proses 1.0 & 2.0)
-    Route::post('/admin/initiate-lecturer', [StakeholderController::class, 'initiateLecturer'])->name('admin.initiate-lecturer');
-    Route::post('/initiate-lecturer', [StakeholderController::class, 'initiateLecturer'])->name('initiate-lecturer');
+    // B. Modul Pengelolaan Pengguna, Whitelist KRS & Tim Eksklusif (Proses 1.0 — Fase 1)
+    Route::middleware('auth:sanctum')->group(function () {
+        // 1. Inisiasi Dosen Pengampu oleh Master Admin
+        Route::post('/admin/lecturers', [UserController::class, 'initiateLecturers'])
+            ->middleware('role:admin')
+            ->name('admin.lecturers');
 
-    Route::get('/stakeholders', [StakeholderController::class, 'index'])->name('stakeholders.index');
-    Route::post('/stakeholders', [StakeholderController::class, 'store'])->name('stakeholders.store');
+        // 2. Mengambil daftar seluruh pengguna terdaftar (Dosen, Master Admin)
+        Route::get('/users', [UserController::class, 'index'])
+            ->middleware('role:lecturer,admin')
+            ->name('users.index');
+
+        // 3. Input manual (typing) email stakeholder ke whitelist (Dosen)
+        Route::post('/users/whitelist', [UserController::class, 'storeWhitelist'])
+            ->middleware('role:lecturer,admin')
+            ->name('users.whitelist');
+
+        // 4. Import Engine CSV/Excel daftar email & NIM mahasiswa (Dosen, Master Admin)
+        Route::post('/users/whitelist/import', [UserController::class, 'importWhitelist'])
+            ->middleware('role:lecturer,admin')
+            ->name('users.whitelist.import');
+
+        // 5. Mendaftarkan tim eksklusif jalur GEMASTIK / LIDM Software (Dosen)
+        Route::post('/teams/exclusive', [TeamController::class, 'storeExclusive'])
+            ->middleware('role:lecturer,admin')
+            ->name('teams.exclusive');
+
+        // 6. Menghapus email dari daftar whitelist jika role belum dikunci (Dosen, Master Admin)
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])
+            ->middleware('role:lecturer,admin')
+            ->name('users.destroy');
+    });
+
+    // Alias endpoints for backward compatibility with earlier tasks
+    Route::post('/admin/initiate-lecturer', [UserController::class, 'initiateLecturers'])->name('admin.initiate-lecturer');
+    Route::post('/initiate-lecturer', [UserController::class, 'initiateLecturers'])->name('initiate-lecturer');
+
+    Route::get('/stakeholders', [UserController::class, 'index'])->name('stakeholders.index');
+    Route::post('/stakeholders', [UserController::class, 'storeWhitelist'])->name('stakeholders.store');
     Route::get('/stakeholders/{user}', [StakeholderController::class, 'show'])->name('stakeholders.show');
-    Route::delete('/stakeholders/{user}', [StakeholderController::class, 'destroy'])->name('stakeholders.destroy');
+    Route::delete('/stakeholders/{user}', [UserController::class, 'destroy'])->name('stakeholders.destroy');
 
     Route::match(['put', 'patch'], '/stakeholders/{user}/role', [StakeholderController::class, 'assignRole'])->name('stakeholders.assign-role');
     Route::post('/stakeholders/assign-role', [StakeholderController::class, 'assignRole'])->name('stakeholders.assign-role-by-email');
