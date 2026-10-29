@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class StudentProfile extends Model
 {
@@ -89,5 +90,15 @@ class StudentProfile extends Model
     {
         return $this->belongsToMany(Skill::class, 'student_skills', 'student_profile_id', 'skill_id')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the role evaluation for this profile's user.
+     *
+     * @return HasOne<StudentRoleEvaluation, $this>
+     */
+    public function evaluation(): HasOne
+    {
+        return $this->hasOne(StudentRoleEvaluation::class, 'user_id', 'user_id');
     }
 }

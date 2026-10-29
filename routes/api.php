@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Api\StakeholderController;
+use App\Http\Controllers\Api\StudentProfilingController;
 use App\Http\Controllers\Api\SystemSettingController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
@@ -79,6 +80,18 @@ $registerRoutes = function () {
             Route::match(['put', 'patch'], '/skills/{id}', [SkillController::class, 'update'])->name('skills.update');
             Route::delete('/skills/{id}', [SkillController::class, 'destroy'])->name('skills.destroy');
         });
+    });
+
+    // D. Modul Pendaftaran & Form Profiling Mahasiswa (Proses 3.0 — Fase 2)
+    Route::middleware(['auth:sanctum', 'role:student,admin'])->prefix('student')->as('student.')->group(function () {
+        // 1. Cek bypass / toggle role 2 & kembalikan kondisi form beserta master roles/skills
+        Route::get('/profiling-config', [StudentProfilingController::class, 'profilingConfig'])->name('profiling-config');
+
+        // 2. Simpan pengisian form profiling dan langsung hitung skor via ScoringEngineService
+        Route::post('/profile', [StudentProfilingController::class, 'storeProfile'])->name('profile.store');
+
+        // 3. Menampilkan pengumuman posisi final, daftar anggota kelompok, pembimbing, dan proyek
+        Route::get('/my-team', [StudentProfilingController::class, 'myTeam'])->name('my-team');
     });
 
     // Alias endpoints for backward compatibility with earlier tasks
