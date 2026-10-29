@@ -122,6 +122,34 @@ $registerRoutes = function () {
         });
     });
 
+    // F. Modul Auto-Grouping Engine & Manajemen Proyek Tim (Proses 5.0 — Fase 4a)
+    Route::middleware('auth:sanctum')->prefix('teams')->as('teams.')->group(function () {
+        // 1. Eksekusi algoritma Auto-Grouping Engine (Dosen)
+        Route::post('/auto-group', [TeamController::class, 'autoGroup'])
+            ->middleware('role:lecturer,admin')
+            ->name('auto-group');
+
+        // 2. Reset hasil pembagian tim reguler (Dosen)
+        Route::post('/reset-grouping', [TeamController::class, 'resetGrouping'])
+            ->middleware('role:lecturer,admin')
+            ->name('reset-grouping');
+
+        // 3. Menampilkan daftar seluruh kelompok beserta anggota dan proyek (Dosen, Praktisi, Asprak)
+        Route::get('/', [TeamController::class, 'index'])
+            ->middleware('role:lecturer,practitioner,assistant,admin')
+            ->name('index');
+
+        // 4. Menetapkan Asisten Praktikum (supervisor) ke kelompok tertentu (Dosen)
+        Route::patch('/{teamId}/supervisor', [TeamController::class, 'assignSupervisor'])
+            ->middleware('role:lecturer,admin')
+            ->name('supervisor.assign');
+
+        // 5. Menyimpan atau memperbarui metadata proyek pada tabel project (Dosen, Asprak)
+        Route::match(['post', 'put', 'patch'], '/{teamId}/project', [TeamController::class, 'storeOrUpdateProject'])
+            ->middleware('role:lecturer,assistant,admin')
+            ->name('project.store');
+    });
+
     // Alias endpoints for backward compatibility with earlier tasks
     Route::post('/admin/initiate-lecturer', [UserController::class, 'initiateLecturers'])->name('admin.initiate-lecturer');
     Route::post('/initiate-lecturer', [UserController::class, 'initiateLecturers'])->name('initiate-lecturer');
