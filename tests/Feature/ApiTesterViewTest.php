@@ -20,7 +20,9 @@ class ApiTesterViewTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSeeText('PAD API Tester & Playground');
-        $response->assertSeeText('Stakeholders & Whitelist');
+        $response->assertSeeText('Modul B:');
+        $response->assertSeeText('Modul C:');
+        $response->assertSeeText('Modul D:');
     }
 
     /**

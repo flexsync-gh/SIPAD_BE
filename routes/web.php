@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -31,19 +32,36 @@ if (app()->environment('local', 'testing')) {
             $email = strtolower(trim((string) $request->input('email')));
             $user = User::where('email', $email)->first();
 
+            $rawRole = (string) ($request->input('user_role') ?? $request->input('role') ?? 'admin');
+            $role = UserRole::normalize($rawRole) ?? UserRole::Admin;
+
             if (! $user) {
-                if ($request->boolean('create_if_missing')) {
+                if ($request->boolean('create_if_missing', true)) {
                     $user = User::create([
-                        'name' => $request->input('name') ?: 'Developer Tester',
-                        'email' => $email ?: 'dev.test@mail.ugm.ac.id',
-                        'user_role' => UserRole::Admin,
+                        'name' => $request->input('name') ?: 'Dev '.ucfirst($role->value),
+                        'email' => $email ?: 'dev.'.$role->value.'@mail.ugm.ac.id',
+                        'user_role' => $role,
                         'status' => 'active',
                     ]);
+
+                    if ($role === UserRole::Student) {
+                        StudentProfile::create([
+                            'user_id' => $user->id,
+                            'nim' => $request->input('nim') ?: '21/'.rand(100000, 999999).'/SV/19000',
+                            'is_bypass' => $request->boolean('is_bypass', false),
+                        ]);
+                    }
                 } else {
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Pengguna dengan email "'.$email.'" tidak ditemukan.',
                     ], 404);
+                }
+            } else {
+                // If is_bypass explicitly passed for student, sync it
+                if ($user->studentProfile && $request->has('is_bypass')) {
+                    $user->studentProfile->is_bypass = $request->boolean('is_bypass');
+                    $user->studentProfile->save();
                 }
             }
 

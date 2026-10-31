@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\EvaluationController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Api\StakeholderController;
+use App\Http\Controllers\Api\StudentArchivalController;
 use App\Http\Controllers\Api\StudentProfilingController;
 use App\Http\Controllers\Api\SystemSettingController;
 use App\Http\Controllers\Api\TeamController;
@@ -148,6 +150,37 @@ $registerRoutes = function () {
         Route::match(['post', 'put', 'patch'], '/{teamId}/project', [TeamController::class, 'storeOrUpdateProject'])
             ->middleware('role:lecturer,assistant,admin')
             ->name('project.store');
+    });
+
+    // G. Modul Kotak Pengaduan / Digital Complaint Box (Proses 6.0 — Fase 4b)
+    Route::middleware('auth:sanctum')->prefix('complaints')->as('complaints.')->group(function () {
+        // 1. Mengirim tiket pengaduan anggota tim (Mahasiswa)
+        Route::post('/', [ComplaintController::class, 'store'])
+            ->middleware('role:student,admin')
+            ->name('store');
+
+        // 2. Melihat daftar tiket pengaduan (Dosen, Praktisi, Asprak, Mahasiswa)
+        Route::get('/', [ComplaintController::class, 'index'])->name('index');
+
+        // 3. Melihat detail tiket pengaduan beserta URL/stream berkas bukti (Dosen, Praktisi, Asprak, Pelapor)
+        Route::get('/{id}', [ComplaintController::class, 'show'])->name('show');
+        Route::get('/{id}/evidence', [ComplaintController::class, 'downloadEvidence'])->name('evidence');
+        Route::get('/{id}/download', [ComplaintController::class, 'downloadEvidence'])->name('download');
+
+        // 4. Menandai bahwa laporan pengaduan telah ditinjau (Dosen, Asprak)
+        Route::patch('/{id}/review', [ComplaintController::class, 'review'])
+            ->middleware('role:lecturer,assistant,admin')
+            ->name('review');
+    });
+
+    // H. Modul Pengarsipan Mahasiswa / Student Archival Management (Proses 7.0 — Fase 5)
+    Route::middleware(['auth:sanctum', 'role:lecturer,admin'])->prefix('students')->as('students.')->group(function () {
+        // 1. Mengambil daftar mahasiswa aktif yang dapat diarsipkan (support filter Tahun Ajaran / Angkatan)
+        Route::get('/archivable', [StudentArchivalController::class, 'archivable'])->name('archivable');
+
+        // 2. Mengarsipkan akun mahasiswa terpilih (UPDATE users SET status = 'archived')
+        Route::post('/archive', [StudentArchivalController::class, 'archive'])->name('archive');
+        Route::post('/unarchive', [StudentArchivalController::class, 'unarchive'])->name('unarchive');
     });
 
     // Alias endpoints for backward compatibility with earlier tasks

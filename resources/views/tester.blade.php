@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>PAD Backend - API Testing Playground</title>
+    <title>PAD Backend - API Testing Playground (Modul B - D)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,12 +27,17 @@
     <style>
         [x-cloak] { display: none !important; }
         pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-        .tab-active { border-bottom-color: #003366; color: #003366; font-weight: 600; }
+        .tab-active { border-bottom-color: #003366; color: #003366; font-weight: 700; background-color: #f8fafc; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans" x-data="apiTester()" x-init="initApp()" x-cloak>
 
     <!-- Top Header -->
+    @if(isset($oauthCode) && $oauthCode)
+    <div class="bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs text-emerald-800 text-center font-mono">
+        Google OAuth Code terdeteksi: <strong>{{ $oauthCode }}</strong>
+    </div>
+    @endif
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -42,66 +47,102 @@
                         PAD
                     </div>
                     <div>
-                        <h1 class="text-base font-bold text-slate-900 leading-tight">PAD API Tester & Playground</h1>
-                        <p class="text-xs text-slate-500">Platform Proyek Akhir D4 — Simple API Testing Dashboard</p>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base font-bold text-slate-900 leading-tight">PAD API Tester & Playground</h1>
+                            <span class="text-3xs bg-ugm-blue/10 text-ugm-blue font-bold px-2 py-0.5 rounded-full border border-ugm-blue/20">Fase 1 & 2 (Modul B - D)</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Pengujian Modul B (Pengguna & Tim), Modul C (Konfigurasi & Skill), Modul D (Profiling)</p>
                     </div>
                 </div>
 
-                <!-- API Prefix Switcher & Active Token Info -->
+                <!-- API Prefix & Active Persona / Token Status -->
                 <div class="flex items-center gap-3">
                     <!-- API Prefix Toggle -->
-                    <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 text-xs">
-                        <span class="text-slate-500 px-2 font-medium">Prefix:</span>
-                        <button type="button" @click="apiPrefix = '/api/v1'" :class="apiPrefix === '/api/v1' ? 'bg-white text-ugm-blue font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2.5 py-1 rounded transition">
-                            v1 (/api/v1)
+                    <div class="hidden sm:flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 text-xs">
+                        <span class="text-slate-500 px-1.5 font-medium">Prefix:</span>
+                        <button type="button" @click="apiPrefix = '/api'" :class="apiPrefix === '/api' ? 'bg-white text-ugm-blue font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-0.5 rounded transition text-2xs">
+                            /api
                         </button>
-                        <button type="button" @click="apiPrefix = '/api'" :class="apiPrefix === '/api' ? 'bg-white text-ugm-blue font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2.5 py-1 rounded transition">
-                            Root (/api)
+                        <button type="button" @click="apiPrefix = '/api/v1'" :class="apiPrefix === '/api/v1' ? 'bg-white text-ugm-blue font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-0.5 rounded transition text-2xs">
+                            /api/v1
                         </button>
                     </div>
 
                     <!-- Token Status Badge -->
                     <div class="flex items-center gap-2">
                         <template x-if="bearerToken">
-                            <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-3 py-1.5 rounded-full font-medium">
+                            <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-2.5 py-1.5 rounded-lg font-medium">
                                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span x-text="'Token: ' + bearerToken.substring(0, 8) + '...'"></span>
-                                <button type="button" @click="copyToClipboard(bearerToken, 'Token disalin!')" title="Salin Token" class="text-emerald-700 hover:text-emerald-900 ml-1">
-                                    📋
-                                </button>
-                                <button type="button" @click="clearToken()" title="Hapus Token" class="text-rose-600 hover:text-rose-800 font-bold ml-1">
-                                    ✕
-                                </button>
+                                <span class="font-mono text-2xs" x-text="activeUser ? activeUser.name + ' (' + activeUser.user_role + ')' : bearerToken.substring(0, 10) + '...'"></span>
+                                <button type="button" @click="copyToClipboard(bearerToken, 'Token disalin!')" title="Salin Token" class="text-emerald-700 hover:text-emerald-900 ml-1 text-xs">📋</button>
+                                <button type="button" @click="clearToken()" title="Hapus Token" class="text-rose-600 hover:text-rose-800 font-bold ml-1 text-xs">✕</button>
                             </div>
                         </template>
                         <template x-if="!bearerToken">
-                            <div class="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-600 text-xs px-3 py-1.5 rounded-full">
+                            <div class="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-500 text-xs px-2.5 py-1.5 rounded-lg">
                                 <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                                <span>No Sanctum Token</span>
+                                <span class="text-2xs">No Token</span>
                             </div>
                         </template>
 
-                        <!-- Quick Dev Token Button -->
-                        <button type="button" @click="showDevTokenModal = true" class="text-xs bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1">
-                            <span>⚡</span> Dev Token
-                        </button>
+                        <!-- Quick Persona Dropdown Button -->
+                        <div class="relative" x-data="{ openPersona: false }">
+                            <button type="button" @click="openPersona = !openPersona" class="text-xs bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1.5 shadow-xs">
+                                <span>👤 Ganti Persona</span>
+                                <span class="text-3xs">▼</span>
+                            </button>
+                            <div x-show="openPersona" @click.away="openPersona = false" class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 text-xs space-y-1">
+                                <div class="px-2 py-1 text-3xs font-bold text-slate-400 uppercase tracking-wider">Pilih Persona untuk Test Token:</div>
+                                <button type="button" @click="loginAsPersona('dosen.pengampu@mail.ugm.ac.id', 'lecturer', 'Dr. Dosen Pengampu, M.T.', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-purple-50 text-purple-900 flex items-center justify-between">
+                                    <span>👨‍🏫 <strong>Dosen Pengampu</strong></span>
+                                    <span class="text-3xs bg-purple-100 px-1.5 py-0.5 rounded text-purple-700 font-bold">Lecturer</span>
+                                </button>
+                                <button type="button" @click="loginAsPersona('admin.master@mail.ugm.ac.id', 'admin', 'Master Admin PAD', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 text-emerald-900 flex items-center justify-between">
+                                    <span>👑 <strong>Master Admin</strong></span>
+                                    <span class="text-3xs bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-700 font-bold">Admin</span>
+                                </button>
+                                <button type="button" @click="loginAsPersona('mhs.reguler@mail.ugm.ac.id', 'student', 'Mahasiswa Reguler', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-sky-50 text-sky-900 flex items-center justify-between">
+                                    <span>🎓 <strong>Mahasiswa Reguler</strong></span>
+                                    <span class="text-3xs bg-sky-100 px-1.5 py-0.5 rounded text-sky-700 font-bold">KRS Aktif</span>
+                                </button>
+                                <button type="button" @click="loginAsPersona('mhs.gemastik@mail.ugm.ac.id', 'student', 'Mahasiswa Jalur GEMASTIK', true); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-amber-50 text-amber-900 flex items-center justify-between">
+                                    <span>🚀 <strong>Mahasiswa GEMASTIK</strong></span>
+                                    <span class="text-3xs bg-amber-100 px-1.5 py-0.5 rounded text-amber-800 font-bold">Bypass</span>
+                                </button>
+                                <button type="button" @click="loginAsPersona('asisten.lab@mail.ugm.ac.id', 'assistant', 'Asisten Praktikum Lab', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-teal-50 text-teal-900 flex items-center justify-between">
+                                    <span>🤝 <strong>Asisten Praktikum</strong></span>
+                                    <span class="text-3xs bg-teal-100 px-1.5 py-0.5 rounded text-teal-700 font-bold">Assistant</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Navigation Tabs -->
-            <nav class="flex space-x-6 border-t border-slate-100 overflow-x-auto text-sm" aria-label="Tabs">
-                <button type="button" @click="activeTab = 'stakeholders'" :class="activeTab === 'stakeholders' ? 'tab-active border-b-2 font-semibold' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-3 px-1 whitespace-nowrap transition flex items-center gap-2">
-                    <span>👥</span> Stakeholders & Whitelist
+            <!-- Navigation Tabs for Modul B, C, D -->
+            <nav class="flex space-x-2 border-t border-slate-100 overflow-x-auto text-xs py-1" aria-label="Tabs">
+                <!-- Modul B -->
+                <button type="button" @click="activeTab = 'modul-b'" :class="activeTab === 'modul-b' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
+                    <span>👥</span>
+                    <span><strong>Modul B:</strong> Pengguna, Whitelist KRS & Tim Eksklusif</span>
                 </button>
-                <button type="button" @click="activeTab = 'lecturer'" :class="activeTab === 'lecturer' ? 'tab-active border-b-2 font-semibold' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-3 px-1 whitespace-nowrap transition flex items-center gap-2">
-                    <span>🎓</span> Inisiasi Dosen (Admin)
+
+                <!-- Modul C -->
+                <button type="button" @click="activeTab = 'modul-c'; fetchSystemSettings(); fetchMasterRoles();" :class="activeTab === 'modul-c' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
+                    <span>⚙️</span>
+                    <span><strong>Modul C:</strong> Konfigurasi Sistem & Master Data Role/Skill</span>
                 </button>
-                <button type="button" @click="activeTab = 'auth'" :class="activeTab === 'auth' ? 'tab-active border-b-2 font-semibold' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-3 px-1 whitespace-nowrap transition flex items-center gap-2">
-                    <span>🔐</span> Auth & SSO Google
+
+                <!-- Modul D -->
+                <button type="button" @click="activeTab = 'modul-d'; fetchProfilingConfig();" :class="activeTab === 'modul-d' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
+                    <span>📝</span>
+                    <span><strong>Modul D:</strong> Pendaftaran & Form Profiling Mahasiswa</span>
                 </button>
-                <button type="button" @click="activeTab = 'console'" :class="activeTab === 'console' ? 'tab-active border-b-2 font-semibold' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-3 px-1 whitespace-nowrap transition flex items-center gap-2">
-                    <span>⚡</span> API Console (Custom)
+
+                <!-- Universal Console -->
+                <button type="button" @click="activeTab = 'console'" :class="activeTab === 'console' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5 text-slate-500">
+                    <span>⚡</span>
+                    <span>Universal Console</span>
                 </button>
             </nav>
         </div>
@@ -113,458 +154,717 @@
         <!-- Left / Primary Area: Feature Test Panel (7 cols on lg) -->
         <section class="lg:col-span-7 space-y-6">
 
-            <!-- ========================================== -->
-            <!-- TAB 1: STAKEHOLDERS & WHITELIST            -->
-            <!-- ========================================== -->
-            <div x-show="activeTab === 'stakeholders'" class="space-y-6">
+            <!-- ======================================================== -->
+            <!-- MODUL B: PENGELOLAAN PENGGUNA, WHITELIST & TIM EKSKLUSIF  -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'modul-b'" class="space-y-6">
 
-                <!-- Actions & Filter Bar -->
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        <div class="flex-1 relative">
-                            <input type="text" x-model="stakeholderFilters.search" @input.debounce.400ms="fetchStakeholders(1)" placeholder="Cari nama atau email..." class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-1.5 text-xs focus:ring-2 focus:ring-ugm-blue focus:outline-none">
-                            <span class="absolute left-3 top-2 text-slate-400 text-xs">🔍</span>
-                        </div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <button type="button" @click="showAddStakeholderModal = true" class="text-xs bg-ugm-blue hover:bg-ugm-dark text-white px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1 shadow-xs">
-                                <span>+</span> Tambah Whitelist
-                            </button>
-                            <button type="button" @click="showAssignRoleModal = true" class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
-                                🔄 Assign Role by Email
-                            </button>
-                            <button type="button" @click="fetchStakeholders(stakeholdersMeta.current_page)" title="Refresh Data" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 p-1.5 rounded-lg transition">
-                                🔄
-                            </button>
-                        </div>
+                <!-- Modul B Header Card -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <span>👥</span> B. Modul Pengelolaan Pengguna, Whitelist KRS & Tim Eksklusif
+                        </h2>
+                        <p class="text-xs text-slate-500">Proses 1.0 — Fase 1: Inisiasi dosen, pengelolaan whitelist KRS, import file Excel/CSV, dan pendaftaran tim eksklusif</p>
                     </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" @click="modulBSection = 'users'" :class="modulBSection === 'users' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Daftar Users
+                        </button>
+                        <button type="button" @click="modulBSection = 'lecturers'" :class="modulBSection === 'lecturers' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Inisiasi Dosen
+                        </button>
+                        <button type="button" @click="modulBSection = 'whitelist'" :class="modulBSection === 'whitelist' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Input Whitelist
+                        </button>
+                        <button type="button" @click="modulBSection = 'import'" :class="modulBSection === 'import' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Import KRS
+                        </button>
+                        <button type="button" @click="modulBSection = 'exclusive'" :class="modulBSection === 'exclusive' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Tim Eksklusif
+                        </button>
+                    </div>
+                </div>
 
-                    <!-- Filter Dropdowns -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-xs">
-                        <div>
-                            <label class="block text-slate-500 mb-1 font-medium">Role:</label>
-                            <select x-model="stakeholderFilters.role" @change="fetchStakeholders(1)" class="w-full bg-white border border-slate-300 rounded-md py-1 px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ugm-blue">
-                                <option value="">Semua Role</option>
-                                <option value="student">Mahasiswa (student)</option>
-                                <option value="lecturer">Dosen (lecturer)</option>
-                                <option value="admin">Admin (admin)</option>
-                                <option value="assistant">Asisten (assistant)</option>
-                                <option value="practitioner">Praktisi (practitioner)</option>
-                            </select>
+                <!-- SUBSECTION B1: DAFTAR USERS (GET /api/users & DELETE /api/users/{id}) -->
+                <div x-show="modulBSection === 'users'" class="space-y-4">
+                    <!-- Filter & Search -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800">Endpoint: <code class="text-ugm-blue font-mono font-semibold">GET /api/users</code> & <code class="text-rose-600 font-mono font-semibold">DELETE /api/users/{id}</code></span>
+                            <span class="text-3xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">Akses: Dosen, Master Admin</span>
                         </div>
-                        <div>
-                            <label class="block text-slate-500 mb-1 font-medium">Status:</label>
-                            <select x-model="stakeholderFilters.status" @change="fetchStakeholders(1)" class="w-full bg-white border border-slate-300 rounded-md py-1 px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ugm-blue">
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <div class="flex-1 relative">
+                                <input type="text" x-model="userFilters.search" @input.debounce.400ms="fetchUsers(1)" placeholder="Cari nama, email, atau NIM..." class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-ugm-blue focus:outline-none">
+                                <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+                            </div>
+                            <select x-model="userFilters.user_role" @change="fetchUsers(1)" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+                                <option value="">Semua Role</option>
+                                <option value="student">Mahasiswa</option>
+                                <option value="lecturer">Dosen</option>
+                                <option value="admin">Admin</option>
+                                <option value="assistant">Asisten</option>
+                                <option value="practitioner">Praktisi</option>
+                            </select>
+                            <select x-model="userFilters.status" @change="fetchUsers(1)" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
                                 <option value="">Semua Status</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
+                                <option value="archived">Archived</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="block text-slate-500 mb-1 font-medium">Bypass KRS:</label>
-                            <select x-model="stakeholderFilters.is_bypass" @change="fetchStakeholders(1)" class="w-full bg-white border border-slate-300 rounded-md py-1 px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ugm-blue">
-                                <option value="">Semua</option>
-                                <option value="true">Bypass (true)</option>
-                                <option value="false">Non-Bypass (false)</option>
+                            <select x-model="userFilters.is_bypass" @change="fetchUsers(1)" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+                                <option value="">Semua Jalur</option>
+                                <option value="true">Bypass (GEMASTIK)</option>
+                                <option value="false">Reguler</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="block text-slate-500 mb-1 font-medium">Per Page:</label>
-                            <select x-model="stakeholderFilters.per_page" @change="fetchStakeholders(1)" class="w-full bg-white border border-slate-300 rounded-md py-1 px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ugm-blue">
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="15">15</option>
-                                <option value="25">25</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stakeholders Table -->
-                <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-                    <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-sm text-slate-800">Daftar Stakeholder Terdaftar</span>
-                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold" x-text="stakeholdersMeta.total + ' data'"></span>
-                        </div>
-                        <div class="text-xs text-slate-500" x-text="'Halaman ' + (stakeholdersMeta.current_page || 1) + ' dari ' + (stakeholdersMeta.last_page || 1)"></div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200">
-                                <tr>
-                                    <th class="py-2.5 px-3">User</th>
-                                    <th class="py-2.5 px-3">Role</th>
-                                    <th class="py-2.5 px-3">Status</th>
-                                    <th class="py-2.5 px-3">NIM / Bypass</th>
-                                    <th class="py-2.5 px-3 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                <template x-if="loadingStakeholders">
-                                    <tr>
-                                        <td colspan="5" class="py-8 text-center text-slate-400">
-                                            <div class="inline-block animate-spin mr-2">⏳</div> Memuat data stakeholder...
-                                        </td>
-                                    </tr>
-                                </template>
-                                <template x-if="!loadingStakeholders && stakeholdersList.length === 0">
-                                    <tr>
-                                        <td colspan="5" class="py-8 text-center text-slate-500">
-                                            Belum ada data stakeholder ditemukan. Tambahkan whitelist atau ubah filter pencarian.
-                                        </td>
-                                    </tr>
-                                </template>
-                                <template x-for="item in stakeholdersList" :key="item.id">
-                                    <tr class="hover:bg-slate-50 transition">
-                                        <td class="py-2.5 px-3">
-                                            <div class="font-medium text-slate-900" x-text="item.name || '(Tanpa Nama)'"></div>
-                                            <div class="text-slate-500 text-2xs font-mono" x-text="item.email"></div>
-                                        </td>
-                                        <td class="py-2.5 px-3">
-                                            <span :class="getRoleBadgeClass(item.user_role)" class="px-2 py-0.5 rounded-md font-medium text-2xs" x-text="item.user_role"></span>
-                                        </td>
-                                        <td class="py-2.5 px-3">
-                                            <span :class="item.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'" class="px-2 py-0.5 rounded-md font-medium text-2xs" x-text="item.status"></span>
-                                        </td>
-                                        <td class="py-2.5 px-3">
-                                            <template x-if="item.student_profile">
-                                                <div>
-                                                    <span class="font-mono" x-text="item.student_profile.nim || '-'"></span>
-                                                    <template x-if="item.student_profile.is_bypass">
-                                                        <span class="ml-1 bg-amber-100 text-amber-800 text-3xs px-1.5 py-0.2 rounded font-bold">BYPASS</span>
-                                                    </template>
-                                                </div>
-                                            </template>
-                                            <template x-if="!item.student_profile">
-                                                <span class="text-slate-400">-</span>
-                                            </template>
-                                        </td>
-                                        <td class="py-2.5 px-3 text-right space-x-1 whitespace-nowrap">
-                                            <!-- Detail Button -->
-                                            <button type="button" @click="getStakeholderDetail(item.id)" title="Detail (GET)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition text-2xs">
-                                                Detail
-                                            </button>
-                                            <!-- Edit Role Button -->
-                                            <button type="button" @click="openEditRoleModal(item)" title="Ubah Role (PUT)" class="px-2 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded transition text-2xs font-medium">
-                                                Role
-                                            </button>
-                                            <!-- Issue Token / Login As -->
-                                            <button type="button" @click="generateDevTokenForUser(item.email)" title="Buat Token Sanctum untuk User ini" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded transition text-2xs font-medium">
-                                                🔑 Token
-                                            </button>
-                                            <!-- Delete Button -->
-                                            <button type="button" @click="deleteStakeholder(item)" title="Hapus (DELETE)" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded transition text-2xs font-medium">
-                                                Hapus
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination Footer -->
-                    <div class="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between text-xs bg-slate-50">
-                        <button type="button" :disabled="stakeholdersMeta.current_page <= 1" @click="fetchStakeholders(stakeholdersMeta.current_page - 1)" class="px-3 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                            &larr; Sebelumnya
-                        </button>
-                        <span class="text-slate-600" x-text="'Halaman ' + (stakeholdersMeta.current_page || 1) + ' dari ' + (stakeholdersMeta.last_page || 1)"></span>
-                        <button type="button" :disabled="stakeholdersMeta.current_page >= stakeholdersMeta.last_page" @click="fetchStakeholders(stakeholdersMeta.current_page + 1)" class="px-3 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                            Berikutnya &rarr;
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ========================================== -->
-            <!-- TAB 2: INISIASI DOSEN (ADMIN)              -->
-            <!-- ========================================== -->
-            <div x-show="activeTab === 'lecturer'" class="space-y-6">
-                <!-- Info Box -->
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 leading-relaxed">
-                    <strong class="font-bold flex items-center gap-1 mb-1">
-                        <span>ℹ️</span> Fitur Inisiasi Dosen Pengampu (Proses 1.0 & 2.0)
-                    </strong>
-                    Menginisiasi alamat email dosen pengampu sebagai <strong>Full Admin</strong> dengan status <strong>active</strong>. Dapat dilakukan secara satuan (single) atau sekaligus (batch).
-                </div>
-
-                <!-- Single vs Batch Tabs -->
-                <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                        <h3 class="font-bold text-sm text-slate-800">Form Inisiasi Dosen Pengampu</h3>
-                        <div class="flex rounded-md bg-slate-100 p-0.5 text-xs">
-                            <button type="button" @click="lecturerMode = 'single'" :class="lecturerMode === 'single' ? 'bg-white text-ugm-blue font-semibold shadow-xs' : 'text-slate-600'" class="px-3 py-1 rounded transition">
-                                Single
-                            </button>
-                            <button type="button" @click="lecturerMode = 'batch'" :class="lecturerMode === 'batch' ? 'bg-white text-ugm-blue font-semibold shadow-xs' : 'text-slate-600'" class="px-3 py-1 rounded transition">
-                                Batch (Banyak)
+                            <button type="button" @click="fetchUsers(usersMeta.current_page)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                                🔄 Refresh
                             </button>
                         </div>
                     </div>
 
-                    <!-- Single Lecturer Form -->
-                    <template x-if="lecturerMode === 'single'">
+                    <!-- Users Table -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                        <div class="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between text-xs bg-slate-50 font-medium">
+                            <span x-text="'Total: ' + usersMeta.total + ' pengguna terdaftar'"></span>
+                            <span x-text="'Hal ' + (usersMeta.current_page || 1) + ' dari ' + (usersMeta.last_page || 1)"></span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200 text-3xs">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Nama & Email</th>
+                                        <th class="py-2.5 px-3">Role</th>
+                                        <th class="py-2.5 px-3">Status</th>
+                                        <th class="py-2.5 px-3">NIM / Bypass</th>
+                                        <th class="py-2.5 px-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <template x-if="loadingUsers">
+                                        <tr>
+                                            <td colspan="5" class="py-8 text-center text-slate-400">
+                                                <div class="inline-block animate-spin mr-1">⏳</div> Memuat daftar pengguna...
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="!loadingUsers && usersList.length === 0">
+                                        <tr>
+                                            <td colspan="5" class="py-8 text-center text-slate-500">
+                                                Tidak ada data pengguna ditemukan.
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-for="u in usersList" :key="u.id">
+                                        <tr class="hover:bg-slate-50 transition">
+                                            <td class="py-2 px-3">
+                                                <div class="font-bold text-slate-900" x-text="u.name || '(Belum isi nama)'"></div>
+                                                <div class="font-mono text-2xs text-slate-500" x-text="u.email"></div>
+                                            </td>
+                                            <td class="py-2 px-3">
+                                                <span :class="getRoleBadgeClass(u.user_role)" class="px-2 py-0.5 rounded font-bold text-3xs uppercase" x-text="u.user_role"></span>
+                                            </td>
+                                            <td class="py-2 px-3">
+                                                <span :class="u.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'" class="px-2 py-0.5 rounded text-3xs font-medium" x-text="u.status"></span>
+                                            </td>
+                                            <td class="py-2 px-3">
+                                                <template x-if="u.student_profile">
+                                                    <div>
+                                                        <span class="font-mono text-2xs" x-text="u.student_profile.nim || '-'"></span>
+                                                        <template x-if="u.student_profile.is_bypass">
+                                                            <span class="ml-1 bg-amber-100 text-amber-900 text-3xs px-1.5 py-0.2 rounded font-bold">BYPASS</span>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template x-if="!u.student_profile">
+                                                    <span class="text-slate-400 text-3xs">-</span>
+                                                </template>
+                                            </td>
+                                            <td class="py-2 px-3 text-right space-x-1 whitespace-nowrap">
+                                                <!-- Switch Token to this user -->
+                                                <button type="button" @click="generateDevTokenForUser(u.email)" title="Ganti Token ke user ini" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-3xs font-bold transition">
+                                                    🔑 Login As
+                                                </button>
+                                                <!-- Delete User -->
+                                                <button type="button" @click="deleteUser(u)" title="Hapus dari whitelist (DELETE /api/users/{id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-3xs font-bold transition">
+                                                    Hapus
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="px-4 py-2 border-t border-slate-100 flex items-center justify-between text-xs bg-slate-50">
+                            <button type="button" :disabled="usersMeta.current_page <= 1" @click="fetchUsers(usersMeta.current_page - 1)" class="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40 transition text-2xs">
+                                &larr; Prev
+                            </button>
+                            <span class="text-slate-500 text-2xs" x-text="'Halaman ' + usersMeta.current_page + ' / ' + usersMeta.last_page"></span>
+                            <button type="button" :disabled="usersMeta.current_page >= usersMeta.last_page" @click="fetchUsers(usersMeta.current_page + 1)" class="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40 transition text-2xs">
+                                Next &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBSECTION B2: INISIASI DOSEN (POST /api/admin/lecturers) -->
+                <div x-show="modulBSection === 'lecturers'" class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                    <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Inisiasi Dosen Pengampu & Berikan Hak Akses Dosen/Admin</h3>
+                            <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono font-semibold">POST /api/admin/lecturers</code> (Akses: Master Admin)</p>
+                        </div>
+                        <div class="flex bg-slate-100 p-0.5 rounded-lg text-xs">
+                            <button type="button" @click="lecturerFormMode = 'single'" :class="lecturerFormMode === 'single' ? 'bg-white font-bold text-ugm-blue shadow-xs' : 'text-slate-600'" class="px-3 py-1 rounded">Single</button>
+                            <button type="button" @click="lecturerFormMode = 'batch'" :class="lecturerFormMode === 'batch' ? 'bg-white font-bold text-ugm-blue shadow-xs' : 'text-slate-600'" class="px-3 py-1 rounded">Batch</button>
+                        </div>
+                    </div>
+
+                    <!-- Single Form -->
+                    <template x-if="lecturerFormMode === 'single'">
                         <form @submit.prevent="submitSingleLecturer()" class="space-y-3 text-xs">
                             <div>
                                 <label class="block font-medium text-slate-700 mb-1">Email Dosen Pengampu <span class="text-rose-500">*</span></label>
-                                <input type="email" x-model="singleLecturer.email" required placeholder="contoh: dosen.pengampu@mail.ugm.ac.id" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-ugm-blue focus:outline-none">
+                                <input type="email" x-model="singleLecturer.email" required placeholder="dosen.pengampu@mail.ugm.ac.id" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
                             </div>
-                            <div>
-                                <label class="block font-medium text-slate-700 mb-1">Nama Lengkap (Opsional)</label>
-                                <input type="text" x-model="singleLecturer.name" placeholder="contoh: Dr. Ir. Budi Santoso, M.T." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-ugm-blue focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block font-medium text-slate-700 mb-1">Route Endpoint:</label>
-                                <div class="flex gap-4 text-xs">
-                                    <label class="flex items-center gap-1.5 cursor-pointer">
-                                        <input type="radio" value="admin/initiate-lecturer" x-model="lecturerEndpoint">
-                                        <span>/admin/initiate-lecturer</span>
-                                    </label>
-                                    <label class="flex items-center gap-1.5 cursor-pointer">
-                                        <input type="radio" value="initiate-lecturer" x-model="lecturerEndpoint">
-                                        <span>/initiate-lecturer</span>
-                                    </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-medium text-slate-700 mb-1">Nama Lengkap (Opsional)</label>
+                                    <input type="text" x-model="singleLecturer.name" placeholder="Dr. Ir. Budi Santoso, M.T." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                                </div>
+                                <div>
+                                    <label class="block font-medium text-slate-700 mb-1">Role yang Diberikan</label>
+                                    <select x-model="singleLecturer.role" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                                        <option value="admin">Full Admin</option>
+                                        <option value="lecturer">Dosen Pengampu</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="pt-2 flex justify-end">
-                                <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-4 py-2 rounded-lg font-medium transition text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50">
-                                    <span x-show="loadingApi">⏳</span> Inisiasi Dosen Satuan (POST)
+                                <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-4 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                    Inisiasi Dosen Pengampu (POST)
                                 </button>
                             </div>
                         </form>
                     </template>
 
-                    <!-- Batch Lecturer Form -->
-                    <template x-if="lecturerMode === 'batch'">
-                        <form @submit.prevent="submitBatchLecturer()" class="space-y-3 text-xs">
-                            <div class="space-y-2">
-                                <template x-for="(item, index) in batchLecturers" :key="index">
-                                    <div class="flex items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                                        <span class="text-slate-400 font-mono text-2xs w-4" x-text="index + 1"></span>
-                                        <input type="email" x-model="item.email" required placeholder="email@mail.ugm.ac.id *" class="flex-1 bg-white border border-slate-300 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-ugm-blue focus:outline-none">
-                                        <input type="text" x-model="item.name" placeholder="Nama Lengkap (opsional)" class="flex-1 bg-white border border-slate-300 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-ugm-blue focus:outline-none">
-                                        <button type="button" @click="removeBatchLecturerRow(index)" :disabled="batchLecturers.length <= 1" class="text-rose-500 hover:text-rose-700 p-1 disabled:opacity-30">
-                                            ✕
-                                        </button>
+                    <!-- Batch Form -->
+                    <template x-if="lecturerFormMode === 'batch'">
+                        <form @submit.prevent="submitBatchLecturers()" class="space-y-3 text-xs">
+                            <div class="space-y-2 max-h-56 overflow-y-auto">
+                                <template x-for="(l, idx) in batchLecturers" :key="idx">
+                                    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                        <span class="text-slate-400 font-mono text-2xs w-4" x-text="idx + 1"></span>
+                                        <input type="email" x-model="l.email" required placeholder="email.dosen@mail.ugm.ac.id" class="flex-1 bg-white border border-slate-300 rounded px-2.5 py-1 text-xs">
+                                        <input type="text" x-model="l.name" placeholder="Nama Lengkap" class="flex-1 bg-white border border-slate-300 rounded px-2.5 py-1 text-xs">
+                                        <select x-model="l.role" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                                            <option value="admin">Admin</option>
+                                            <option value="lecturer">Dosen</option>
+                                        </select>
+                                        <button type="button" @click="batchLecturers.splice(idx, 1)" :disabled="batchLecturers.length <= 1" class="text-rose-500 hover:text-rose-700 p-1 disabled:opacity-30">✕</button>
                                     </div>
                                 </template>
                             </div>
-
                             <div class="flex items-center justify-between pt-2">
-                                <div class="flex gap-2">
-                                    <button type="button" @click="addBatchLecturerRow()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded text-xs font-medium transition">
-                                        + Tambah Baris
-                                    </button>
-                                    <button type="button" @click="fillSampleBatchLecturers()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded text-xs transition">
-                                        Isi Contoh Data
-                                    </button>
-                                </div>
-                                <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-4 py-2 rounded-lg font-medium transition text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50">
-                                    <span x-show="loadingApi">⏳</span> Inisiasi Batch Dosen (POST)
+                                <button type="button" @click="batchLecturers.push({ email: '', name: '', role: 'admin' })" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded text-xs font-medium">
+                                    + Tambah Baris
+                                </button>
+                                <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-4 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                    Inisiasi Batch Dosen (POST)
                                 </button>
                             </div>
                         </form>
                     </template>
                 </div>
-            </div>
 
-            <!-- ========================================== -->
-            <!-- TAB 3: AUTH & SSO GOOGLE                   -->
-            <!-- ========================================== -->
-            <div x-show="activeTab === 'auth'" class="space-y-6">
-
-                <!-- Alert if redirected with OAuth code -->
-                @if(isset($oauthCode) && $oauthCode)
-                <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 p-4 rounded-xl text-xs space-y-2">
-                    <div class="font-bold text-sm flex items-center gap-1.5">
-                        <span>🎉</span> Google OAuth Authorization Code Diterima!
-                    </div>
-                    <p>Kode otorisasi dari Google berhasil ditangkap: <code class="font-mono bg-white px-1.5 py-0.5 rounded border border-emerald-200 text-emerald-700">{{ Str::limit($oauthCode, 35) }}</code></p>
-                    <button type="button" @click="googleAuthCallback.code = '{{ $oauthCode }}'; submitGoogleCallback()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded font-medium transition">
-                        Tukarkan Code Ini Menjadi Token Sanctum Sekarang &rarr;
-                    </button>
-                </div>
-                @endif
-
-                @if(isset($oauthError) && $oauthError)
-                <div class="bg-rose-50 border border-rose-300 text-rose-800 p-4 rounded-xl text-xs">
-                    <strong class="font-bold">OAuth Error:</strong> {{ $oauthError }}
-                </div>
-                @endif
-
-                <!-- Card 1: Google Redirect URL -->
-                <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                        <div>
-                            <h3 class="font-bold text-sm text-slate-800">1. Generate Google OAuth Redirect URL</h3>
-                            <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono">GET /auth/google/redirect</code></p>
-                        </div>
-                        <span class="text-xs bg-sky-50 text-sky-700 font-mono px-2 py-0.5 rounded">GET</span>
+                <!-- SUBSECTION B3: INPUT MANUAL WHITELIST (POST /api/users/whitelist) -->
+                <div x-show="modulBSection === 'whitelist'" class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                    <div class="border-b border-slate-200 pb-3">
+                        <h3 class="font-bold text-sm text-slate-900">Input Manual Whitelist Stakeholder</h3>
+                        <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono font-semibold">POST /api/users/whitelist</code> (Akses: Dosen)</p>
                     </div>
 
-                    <form @submit.prevent="getGoogleRedirectUrl()" class="space-y-3 text-xs">
-                        <div>
-                            <label class="block font-medium text-slate-700 mb-1">Custom Redirect URI (Opsional)</label>
-                            <input type="text" x-model="googleRedirectUri" placeholder="http://localhost:8000/auth/google/callback" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-ugm-blue focus:outline-none">
-                            <span class="text-2xs text-slate-400">Default mengacu pada konfigurasi GOOGLE_REDIRECT_URI di .env</span>
-                        </div>
-                        <div class="flex items-center justify-between pt-1">
-                            <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-4 py-2 rounded-lg font-medium transition text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50">
-                                <span x-show="loadingApi">⏳</span> Dapatkan URL Redirect Google
-                            </button>
-                            <template x-if="googleGeneratedUrl">
-                                <a :href="googleGeneratedUrl" target="_blank" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-lg transition text-xs flex items-center gap-1.5 shadow-xs">
-                                    <span>🌐</span> Buka Login Google (Tab Baru) &rarr;
-                                </a>
-                            </template>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Card 2: Google Callback -->
-                <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                        <div>
-                            <h3 class="font-bold text-sm text-slate-800">2. Google OAuth Callback (Code / Token)</h3>
-                            <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono">POST /auth/google/callback</code></p>
-                        </div>
-                        <span class="text-xs bg-emerald-50 text-emerald-700 font-mono px-2 py-0.5 rounded">POST</span>
-                    </div>
-
-                    <form @submit.prevent="submitGoogleCallback()" class="space-y-3 text-xs">
-                        <div>
-                            <label class="block font-medium text-slate-700 mb-1">Authorization Code dari Google</label>
-                            <input type="text" x-model="googleAuthCallback.code" placeholder="4/0A... (kode yang didapat setelah redirect)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-ugm-blue focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block font-medium text-slate-700 mb-1">Access Token Google (Alternatif jika tidak ada code)</label>
-                            <input type="text" x-model="googleAuthCallback.token" placeholder="ya29.a0... (access token Google OAuth)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-ugm-blue focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block font-medium text-slate-700 mb-1">Redirect URI (Wajib sama dengan saat request redirect)</label>
-                            <input type="text" x-model="googleAuthCallback.redirect_uri" placeholder="http://localhost:8000/auth/google/callback" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-ugm-blue focus:outline-none">
-                        </div>
-                        <div class="pt-1 flex justify-end">
-                            <button type="submit" :disabled="loadingApi" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50">
-                                <span x-show="loadingApi">⏳</span> Kirim Callback & Ambil Token Sanctum
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Card 3 & 4: Auth Me & Logout -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Me Card -->
-                    <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-4 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <h4 class="font-bold text-xs text-slate-800">3. Profil Pengguna (/auth/me)</h4>
-                            <span class="text-3xs bg-sky-50 text-sky-700 font-mono px-1.5 py-0.5 rounded">GET</span>
-                        </div>
-                        <p class="text-2xs text-slate-500">Memerlukan Bearer token aktif. Mengambil data user yang sedang login beserta student profile.</p>
-                        <button type="button" @click="fetchAuthMe()" :disabled="!bearerToken || loadingApi" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg font-medium transition text-xs disabled:opacity-40">
-                            Cek /auth/me
-                        </button>
-                    </div>
-
-                    <!-- Logout Card -->
-                    <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-4 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <h4 class="font-bold text-xs text-slate-800">4. Logout (/auth/logout)</h4>
-                            <span class="text-3xs bg-emerald-50 text-emerald-700 font-mono px-1.5 py-0.5 rounded">POST</span>
-                        </div>
-                        <p class="text-2xs text-slate-500">Memerlukan Bearer token aktif. Menghapus current Personal Access Token Sanctum.</p>
-                        <button type="button" @click="submitLogout()" :disabled="!bearerToken || loadingApi" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg font-medium transition text-xs disabled:opacity-40">
-                            Logout & Revoke Token
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- ========================================== -->
-            <!-- TAB 4: UNIVERSAL API CONSOLE (CUSTOM)      -->
-            <!-- ========================================== -->
-            <div x-show="activeTab === 'console'" class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                        <div>
-                            <h3 class="font-bold text-sm text-slate-800">Universal API Playground</h3>
-                            <p class="text-xs text-slate-500">Uji coba endpoint bebas dengan HTTP Method, Header, dan JSON Body</p>
-                        </div>
-                    </div>
-
-                    <!-- Endpoint Presets -->
-                    <div>
-                        <label class="block text-2xs font-semibold text-slate-500 uppercase mb-1">Preset Endpoint Siap Pakai:</label>
-                        <div class="flex flex-wrap gap-1.5">
-                            <button type="button" @click="applyPreset('GET', '/auth/google/redirect', '')" class="text-3xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                                GET /auth/google/redirect
-                            </button>
-                            <button type="button" @click="applyPreset('GET', '/auth/me', '', true)" class="text-3xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                                GET /auth/me (Auth)
-                            </button>
-                            <button type="button" @click="applyPreset('POST', '/auth/logout', '', true)" class="text-3xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                                POST /auth/logout (Auth)
-                            </button>
-                            <button type="button" @click="applyPreset('GET', '/stakeholders', '')" class="text-3xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                                GET /stakeholders
-                            </button>
-                            <button type="button" @click="applyPreset('POST', '/stakeholders', JSON.stringify({ email: 'mhs@mail.ugm.ac.id', role: 'student', name: 'Contoh Mhs', nim: '21/123456/TK/12345', is_bypass: false }, null, 2))" class="text-3xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                                POST /stakeholders (Single)
-                            </button>
-                            <button type="button" @click="applyPreset('POST', '/admin/initiate-lecturer', JSON.stringify({ email: 'dosen@mail.ugm.ac.id', name: 'Nama Dosen' }, null, 2))" class="text-3xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                                POST /admin/initiate-lecturer
-                            </button>
-                            <button type="button" @click="applyPreset('POST', '/stakeholders/assign-role', JSON.stringify({ email: 'mhs@mail.ugm.ac.id', role: 'assistant' }, null, 2))" class="text-3xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                                POST /stakeholders/assign-role
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Console Form -->
-                    <form @submit.prevent="executeConsoleRequest()" class="space-y-3 text-xs">
-                        <div class="flex gap-2">
-                            <select x-model="consoleReq.method" class="w-28 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 font-bold text-xs focus:ring-1 focus:ring-ugm-blue">
-                                <option value="GET">GET</option>
-                                <option value="POST">POST</option>
-                                <option value="PUT">PUT</option>
-                                <option value="PATCH">PATCH</option>
-                                <option value="DELETE">DELETE</option>
-                            </select>
-                            <div class="flex-1 relative">
-                                <input type="text" x-model="consoleReq.path" placeholder="/stakeholders" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-mono text-xs focus:ring-2 focus:ring-ugm-blue focus:outline-none">
+                    <form @submit.prevent="submitManualWhitelist()" class="space-y-3 text-xs">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Email Stakeholder <span class="text-rose-500">*</span></label>
+                                <input type="email" x-model="manualWhitelist.email" required placeholder="target@mail.ugm.ac.id" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">User Role <span class="text-rose-500">*</span></label>
+                                <select x-model="manualWhitelist.user_role" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                                    <option value="student">Mahasiswa (KRS Aktif)</option>
+                                    <option value="assistant">Asisten Praktikum (Asprak)</option>
+                                    <option value="practitioner">Praktisi Industri</option>
+                                    <option value="lecturer">Dosen Pengampu</option>
+                                    <option value="admin">Full Admin</option>
+                                </select>
                             </div>
                         </div>
 
-                        <!-- Include Bearer Checkbox -->
-                        <div class="flex items-center gap-2">
-                            <label class="flex items-center gap-1.5 cursor-pointer text-slate-700">
-                                <input type="checkbox" x-model="consoleReq.useAuth" class="rounded text-ugm-blue">
-                                <span>Sertakan Sanctum Bearer Token</span>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                                <input type="text" x-model="manualWhitelist.name" placeholder="Nama lengkap" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                            </div>
+                            <div x-show="manualWhitelist.user_role === 'student'">
+                                <label class="block font-medium text-slate-700 mb-1">NIM Mahasiswa</label>
+                                <input type="text" x-model="manualWhitelist.nim" placeholder="21/123456/TK/12345" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                            </div>
+                        </div>
+
+                        <div x-show="manualWhitelist.user_role === 'student'" class="pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                <input type="checkbox" x-model="manualWhitelist.is_bypass" class="rounded text-ugm-blue">
+                                <span class="text-slate-700"><strong>Tandai sebagai Jalur Bypass (GEMASTIK/LIDM)</strong> — Tidak mengikuti pemilihan role ke-2 maupun pengacakan tim reguler</span>
                             </label>
-                            <span class="text-slate-400">|</span>
-                            <span class="text-2xs text-slate-500" x-text="bearerToken ? 'Token terdeteksi (' + bearerToken.substring(0, 10) + '...)' : 'Tidak ada token'"></span>
-                        </div>
-
-                        <!-- JSON Body -->
-                        <div x-show="['POST', 'PUT', 'PATCH', 'DELETE'].includes(consoleReq.method)">
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="font-medium text-slate-700">Request Body (JSON):</label>
-                                <button type="button" @click="formatConsoleJson()" class="text-2xs text-ugm-blue hover:underline">
-                                    Prettify JSON
-                                </button>
-                            </div>
-                            <textarea x-model="consoleReq.body" rows="6" placeholder="{&#10;  &#34;key&#34;: &#34;value&#34;&#10;}" class="w-full bg-slate-900 text-emerald-400 font-mono text-xs p-3 rounded-lg border border-slate-800 focus:outline-none focus:ring-2 focus:ring-ugm-blue"></textarea>
                         </div>
 
                         <div class="pt-2 flex justify-end">
-                            <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-5 py-2 rounded-lg font-semibold transition text-xs flex items-center gap-1.5 shadow-xs disabled:opacity-50">
-                                <span x-show="loadingApi">⏳</span> Kirim Request (Execute)
+                            <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-5 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                Simpan ke Whitelist (POST)
                             </button>
                         </div>
                     </form>
                 </div>
+
+                <!-- SUBSECTION B4: IMPORT ENGINE CSV/EXCEL (POST /api/users/whitelist/import) -->
+                <div x-show="modulBSection === 'import'" class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                    <div class="border-b border-slate-200 pb-3">
+                        <h3 class="font-bold text-sm text-slate-900">Import Engine CSV/Excel KRS (Maatwebsite)</h3>
+                        <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono font-semibold">POST /api/users/whitelist/import</code> (Akses: Dosen, Master Admin)</p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg text-xs text-blue-900 space-y-1">
+                        <p class="font-semibold">Format file CSV/Excel yang didukung:</p>
+                        <p class="text-2xs">Harus memiliki kolom header: <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">email</code>, <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">nim</code>, dan <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">nama</code> (atau name). Engine akan otomatis memasukkan data ke tabel users dan inisiasi student_profiles.</p>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Pilih File CSV / Excel (.xlsx, .xls, .csv)</label>
+                            <input type="file" id="krsImportFile" accept=".csv, .xlsx, .xls" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs">
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2">
+                            <button type="button" @click="generateSampleCsvAndUpload()" class="text-ugm-blue hover:underline text-2xs font-semibold">
+                                💡 Download / Buat File CSV Contoh Otomatis
+                            </button>
+                            <button type="button" @click="submitImportWhitelist()" :disabled="loadingApi" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                Upload & Import Whitelist (POST)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBSECTION B5: TIM EKSKLUSIF GEMASTIK / LIDM (POST /api/teams/exclusive) -->
+                <div x-show="modulBSection === 'exclusive'" class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                    <div class="border-b border-slate-200 pb-3">
+                        <h3 class="font-bold text-sm text-slate-900">Daftarkan Tim Eksklusif (Jalur GEMASTIK / LIDM Software)</h3>
+                        <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono font-semibold">POST /api/teams/exclusive</code> (Akses: Dosen)</p>
+                    </div>
+
+                    <form @submit.prevent="submitExclusiveTeam()" class="space-y-4 text-xs">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Nama Tim Eksklusif <span class="text-rose-500">*</span></label>
+                                <input type="text" x-model="exclusiveTeam.team_name" required placeholder="GEMASTIK XVI Software Development Team" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Nama Proyek</label>
+                                <input type="text" x-model="exclusiveTeam.project_name" placeholder="Smart Agro-Vision Monitoring" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                            </div>
+                        </div>
+
+                        <!-- Anggota Tim -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="font-bold text-slate-700">Daftar Anggota Tim (Otomatis is_bypass = true & bound to team):</label>
+                                <button type="button" @click="exclusiveTeam.members.push({ email: '', name: '', nim: '', role_id: 1 })" class="text-2xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded">
+                                    + Tambah Anggota
+                                </button>
+                            </div>
+                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                                <template x-for="(m, mIdx) in exclusiveTeam.members" :key="mIdx">
+                                    <div class="grid grid-cols-4 gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 items-center">
+                                        <input type="email" x-model="m.email" required placeholder="email.mhs@mail.ugm.ac.id" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                                        <input type="text" x-model="m.name" placeholder="Nama Mhs" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                                        <input type="text" x-model="m.nim" placeholder="NIM Mhs" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                                        <div class="flex items-center gap-1">
+                                            <select x-model="m.role_id" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs flex-1">
+                                                <option value="1">PM</option>
+                                                <option value="2">UIUX</option>
+                                                <option value="3">FE</option>
+                                                <option value="4">BE</option>
+                                            </select>
+                                            <button type="button" @click="exclusiveTeam.members.splice(mIdx, 1)" :disabled="exclusiveTeam.members.length <= 1" class="text-rose-500 hover:text-rose-700 text-xs px-1 disabled:opacity-30">✕</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-5 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                Daftarkan Tim Eksklusif (POST)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- MODUL C: KONFIGURASI SISTEM & MASTER DATA ROLE/SKILL     -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'modul-c'" class="space-y-6">
+
+                <!-- Modul C Header Card -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <span>⚙️</span> C. Modul Konfigurasi Sistem & Master Data Role/Skill
+                        </h2>
+                        <p class="text-xs text-slate-500">Proses 2.0 — Fase 1: Konfigurasi toggle kewajiban role ke-2, jadwal pendaftaran, serta master data 4 roles & skills</p>
+                    </div>
+                    <button type="button" @click="fetchSystemSettings(); fetchMasterRoles();" class="text-2xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
+                        🔄 Muat Ulang Data
+                    </button>
+                </div>
+
+                <!-- CARD C1: KONFIGURASI SISTEM (GET & PUT /api/settings) -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+                    <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">1. Konfigurasi Sistem & Pendaftaran</h3>
+                            <p class="text-xs text-slate-500">Endpoints: <code class="text-ugm-blue font-mono font-semibold">GET /api/settings</code> & <code class="text-emerald-700 font-mono font-semibold">PUT /api/settings</code></p>
+                        </div>
+                        <span class="text-3xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">Akses: Dosen</span>
+                    </div>
+
+                    <form @submit.prevent="updateSystemSettings()" class="space-y-4 text-xs">
+                        <!-- Toggle is_role_2_required -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <span class="font-bold text-slate-900 block text-xs">Kewajiban Pilihan Role ke-2 (is_role_2_required)</span>
+                                <span class="text-slate-500 text-2xs">Jika diaktifkan (Wajib), seluruh mahasiswa reguler wajib memilih Role ke-2 saat profiling</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span :class="settingsForm.is_role_2_required ? 'text-ugm-blue font-bold' : 'text-slate-400 font-normal'" class="text-xs">
+                                    <span x-text="settingsForm.is_role_2_required ? 'WAJIB' : 'OPSIONAL'"></span>
+                                </span>
+                                <button type="button" @click="settingsForm.is_role_2_required = !settingsForm.is_role_2_required" :class="settingsForm.is_role_2_required ? 'bg-ugm-blue' : 'bg-slate-300'" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none">
+                                    <span :class="settingsForm.is_role_2_required ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Other Setting Fields -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Jadwal / Timeline Pendaftaran</label>
+                                <input type="text" x-model="settingsForm.registration_timeline" placeholder="Periode Pendaftaran: 1 - 14 November 2026" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Tahun Ajaran / Semester</label>
+                                <input type="text" x-model="settingsForm.academic_year" placeholder="2026/2027 Ganjil" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Info Syarat & Ketentuan Pendaftaran</label>
+                            <textarea x-model="settingsForm.registration_terms" rows="2" placeholder="Syarat pendaftaran..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue"></textarea>
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-5 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                Simpan Perubahan Pengaturan (PUT)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- CARD C2: MASTER DATA ROLES & SKILLSETS (GET /api/roles, POST /api/skills, PUT/DELETE /api/skills/{id}) -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+                    <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">2. Master Data 4 Roles & Skillsets</h3>
+                            <p class="text-xs text-slate-500">Endpoints: <code class="text-ugm-blue font-mono font-semibold">GET /api/roles</code>, <code class="text-emerald-700 font-mono font-semibold">POST /api/skills</code>, <code class="text-amber-700 font-mono font-semibold">PUT /api/skills/{id}</code>, <code class="text-rose-600 font-mono font-semibold">DELETE /api/skills/{id}</code></p>
+                        </div>
+                        <button type="button" @click="showAddSkillModal = true" class="bg-ugm-blue hover:bg-ugm-dark text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs">
+                            + Tambah Skill Baru
+                        </button>
+                    </div>
+
+                    <!-- 4 Roles Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="r in masterRoles" :key="r.id">
+                            <div class="bg-slate-50 rounded-xl border border-slate-200 p-3.5 space-y-2.5">
+                                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-7 h-7 rounded bg-ugm-blue text-white font-mono font-bold flex items-center justify-center text-xs" x-text="r.code"></span>
+                                        <div>
+                                            <div class="font-bold text-slate-900 text-xs" x-text="r.name"></div>
+                                            <div class="text-3xs text-slate-400 font-mono" x-text="'Role ID: ' + r.id"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-3xs bg-white text-slate-600 px-2 py-0.5 rounded-full border border-slate-200 font-semibold" x-text="(r.skills?.length || 0) + ' skills'"></span>
+                                </div>
+
+                                <!-- Skill Items List -->
+                                <div class="flex flex-wrap gap-1.5">
+                                    <template x-for="s in r.skills" :key="s.id">
+                                        <div class="bg-white border border-slate-200 rounded-md px-2 py-1 text-2xs flex items-center gap-1.5 shadow-2xs group">
+                                            <span class="text-slate-700" x-text="s.name"></span>
+                                            <!-- Edit Skill Inline -->
+                                            <button type="button" @click="openEditSkillModal(s, r.id)" title="Ubah Nama Skill (PUT)" class="text-sky-600 hover:text-sky-800 opacity-60 group-hover:opacity-100 text-3xs font-bold">
+                                                ✎
+                                            </button>
+                                            <!-- Delete Skill -->
+                                            <button type="button" @click="deleteSkill(s)" title="Hapus Skill (DELETE)" class="text-rose-500 hover:text-rose-700 opacity-60 group-hover:opacity-100 text-3xs font-bold">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- MODUL D: PENDAFTARAN & FORM PROFILING MAHASISWA          -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'modul-d'" class="space-y-6">
+
+                <!-- Modul D Header Card -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <span>📝</span> D. Modul Pendaftaran & Form Profiling Mahasiswa
+                        </h2>
+                        <p class="text-xs text-slate-500">Proses 3.0 — Fase 2: Pengisian form profiling mahasiswa, pengecekan bypass & kewajiban role 2, auto scoring, dan pengumuman tim</p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" @click="modulDSection = 'form'" :class="modulDSection === 'form' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Form Profiling
+                        </button>
+                        <button type="button" @click="modulDSection = 'my-team'; fetchStudentMyTeam();" :class="modulDSection === 'my-team' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Pengumuman Tim Saya
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUBSECTION D1: FORM PROFILING MAHASISWA (GET /api/student/profiling-config & POST /api/student/profile) -->
+                <div x-show="modulDSection === 'form'" class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+                    <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Formulir Profiling & Pemilihan Role Mahasiswa</h3>
+                            <p class="text-xs text-slate-500">Endpoints: <code class="text-ugm-blue font-mono font-semibold">GET /api/student/profiling-config</code> & <code class="text-emerald-700 font-mono font-semibold">POST /api/student/profile</code></p>
+                        </div>
+                        <button type="button" @click="fetchProfilingConfig()" class="text-2xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
+                            🔄 Cek Profiling Config
+                        </button>
+                    </div>
+
+                    <!-- Live Config Badges -->
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between text-xs flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-500 text-2xs">Status Mahasiswa:</span>
+                            <span :class="profilingConfigData.is_bypass ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-sky-100 text-sky-900 border border-sky-300'" class="px-2 py-0.5 rounded text-3xs font-bold uppercase" x-text="profilingConfigData.is_bypass ? 'Jalur Bypass (GEMASTIK / LIDM)' : 'Mahasiswa Reguler'"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-500 text-2xs">Role ke-2:</span>
+                            <span :class="profilingConfigData.is_bypass ? 'bg-slate-200 text-slate-600' : (profilingConfigData.is_role_2_required ? 'bg-rose-100 text-rose-800 border border-rose-300 font-bold' : 'bg-emerald-100 text-emerald-800 border border-emerald-300')" class="px-2 py-0.5 rounded text-3xs" x-text="profilingConfigData.is_bypass ? 'Dinonaktifkan (Null)' : (profilingConfigData.is_role_2_required ? 'Wajib Dipilih' : 'Opsional')"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-500 text-2xs">Status Kunci:</span>
+                            <span :class="profilingConfigData.is_locked ? 'bg-rose-100 text-rose-800 font-bold' : 'bg-emerald-100 text-emerald-800 font-medium'" class="px-2 py-0.5 rounded text-3xs" x-text="profilingConfigData.is_locked ? 'Terkunci (Locked)' : 'Terbuka (Editable)'"></span>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="submitStudentProfile()" class="space-y-4 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- NIM -->
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">NIM Mahasiswa <span class="text-rose-500">*</span></label>
+                                <input type="text" x-model="profilingForm.nim" required placeholder="21/473829/SV/19283" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
+                            </div>
+
+                            <!-- Role 1 -->
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Pilihan Role ke-1 <span class="text-rose-500">*</span></label>
+                                <select x-model="profilingForm.role_1_id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue font-bold text-ugm-blue">
+                                    <option value="">-- Pilih Role 1 --</option>
+                                    <template x-for="r in masterRoles" :key="r.id">
+                                        <option :value="r.id" x-text="r.code + ' - ' + r.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <!-- Role 2 -->
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">
+                                    Pilihan Role ke-2
+                                    <span x-show="!profilingConfigData.is_bypass && profilingConfigData.is_role_2_required" class="text-rose-500">* (Wajib)</span>
+                                    <span x-show="profilingConfigData.is_bypass" class="text-slate-400 font-normal">(Dinonaktifkan)</span>
+                                </label>
+                                <select x-model="profilingForm.role_2_id" :disabled="profilingConfigData.is_bypass" :required="!profilingConfigData.is_bypass && profilingConfigData.is_role_2_required" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue disabled:opacity-50 disabled:bg-slate-200">
+                                    <option value="">-- Pilih Role 2 (Opsional / Wajib) --</option>
+                                    <template x-for="r in masterRoles" :key="r.id">
+                                        <option :value="r.id" x-text="r.code + ' - ' + r.name"></option>
+                                    </template>
+                                </select>
+                                <div x-show="profilingForm.role_1_id && profilingForm.role_2_id && profilingForm.role_1_id == profilingForm.role_2_id" class="text-rose-600 text-3xs font-bold mt-1">
+                                    ⚠️ Role 1 dan Role 2 tidak boleh sama!
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Portfolio Link -->
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Tautan Portofolio (GitHub, Behance, Figma, Drive, dsb.)</label>
+                            <input type="url" x-model="profilingForm.portfolio_link" placeholder="https://github.com/username atau https://behance.net/..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
+                        </div>
+
+                        <!-- Skills Checkboxes grouped by Role -->
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-2">Checklist Keahlian / Skillset yang Dikuasai:</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
+                                <template x-for="r in masterRoles" :key="r.id">
+                                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                        <div class="font-bold text-2xs text-slate-700 flex items-center justify-between border-b border-slate-200 pb-1">
+                                            <span x-text="r.code + ' - ' + r.name"></span>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <template x-for="s in r.skills" :key="s.id">
+                                                <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded transition text-2xs">
+                                                    <input type="checkbox" :value="s.id" x-model="profilingForm.skill_ids" class="rounded text-ugm-blue focus:ring-0">
+                                                    <span class="text-slate-800" x-text="s.name"></span>
+                                                </label>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex items-center justify-between border-t border-slate-100">
+                            <span class="text-2xs text-slate-500" x-text="profilingForm.skill_ids.length + ' skill dipilih'"></span>
+                            <button type="submit" :disabled="loadingApi || profilingConfigData.is_locked" class="bg-ugm-blue hover:bg-ugm-dark text-white px-5 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                Simpan Profiling & Hitung Skor (POST)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- SUBSECTION D2: PENGUMUMAN TIM SAYA (GET /api/student/my-team) -->
+                <div x-show="modulDSection === 'my-team'" class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+                    <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">Pengumuman Posisi Final & Kelompok Mahasiswa</h3>
+                            <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono font-semibold">GET /api/student/my-team</code> (Akses: Mahasiswa)</p>
+                        </div>
+                        <button type="button" @click="fetchStudentMyTeam()" class="text-2xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
+                            🔄 Refresh Status Tim
+                        </button>
+                    </div>
+
+                    <template x-if="!myTeamData.has_team">
+                        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-900 space-y-2">
+                            <div class="font-bold flex items-center gap-1.5">
+                                <span>📢</span> Belum Terdaftar dalam Tim / Pengumuman Belum Dirilis
+                            </div>
+                            <p>Mahasiswa saat ini belum memiliki kelompok atau dosen pengampu belum menjalankan/mengunci hasil pengelompokan tim.</p>
+                            <template x-if="myTeamData.final_role">
+                                <div class="mt-2 pt-2 border-t border-amber-200 flex items-center gap-2">
+                                    <span class="font-semibold">Rekomendasi / Posisi Sementara:</span>
+                                    <span class="bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-mono font-bold" x-text="myTeamData.final_role.code + ' (' + myTeamData.final_role.name + ')'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template x-if="myTeamData.has_team && myTeamData.team">
+                        <div class="space-y-4 text-xs">
+                            <!-- Team Banner -->
+                            <div class="bg-slate-900 text-white p-4 rounded-xl space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-3xs uppercase tracking-wider text-amber-400 font-bold" x-text="'Kelompok #' + myTeamData.team.id + ' (' + myTeamData.team.team_type + ')'"></span>
+                                    <span class="bg-emerald-500 text-white px-2 py-0.5 rounded text-3xs font-bold" x-text="myTeamData.final_role?.code || 'Anggota'"></span>
+                                </div>
+                                <h4 class="text-base font-bold text-white" x-text="myTeamData.team.project?.project_name || myTeamData.team.team_name || 'Tim Proyek PAD'"></h4>
+                                <div class="text-slate-300 text-2xs flex items-center gap-4">
+                                    <span>Pembimbing (Supervisor): <strong class="text-white" x-text="myTeamData.team.supervisor?.name || 'Belum ditentukan'"></strong></span>
+                                </div>
+                            </div>
+
+                            <!-- Teammates -->
+                            <div>
+                                <h5 class="font-bold text-slate-800 mb-2">Daftar Anggota Kelompok:</h5>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <template x-for="mem in (myTeamData.team.members || [])" :key="mem.id">
+                                        <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-lg flex items-center justify-between">
+                                            <div>
+                                                <div class="font-bold text-slate-900" x-text="mem.name"></div>
+                                                <div class="text-3xs text-slate-500 font-mono" x-text="mem.email"></div>
+                                            </div>
+                                            <span class="bg-ugm-blue text-white px-2 py-0.5 rounded text-3xs font-mono font-bold" x-text="mem.final_role?.code || mem.role || '-'"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- UNIVERSAL API CONSOLE TAB                                -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'console'" class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
+                <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900">Universal API Playground</h3>
+                        <p class="text-xs text-slate-500">Kirim custom HTTP request ke endpoint manapun</p>
+                    </div>
+                </div>
+
+                <form @submit.prevent="executeConsoleRequest()" class="space-y-3 text-xs">
+                    <div class="flex gap-2">
+                        <select x-model="consoleReq.method" class="w-28 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 font-bold text-xs focus:ring-1 focus:ring-ugm-blue">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                        <input type="text" x-model="consoleReq.path" placeholder="/users" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-mono text-xs focus:ring-1 focus:ring-ugm-blue">
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-slate-700">
+                            <input type="checkbox" x-model="consoleReq.useAuth" class="rounded text-ugm-blue">
+                            <span>Sertakan Bearer Token</span>
+                        </label>
+                    </div>
+
+                    <div x-show="['POST', 'PUT', 'PATCH', 'DELETE'].includes(consoleReq.method)">
+                        <label class="block font-medium text-slate-700 mb-1">Request Body (JSON):</label>
+                        <textarea x-model="consoleReq.body" rows="5" placeholder="{&#10;  &#34;key&#34;: &#34;value&#34;&#10;}" class="w-full bg-slate-900 text-emerald-400 font-mono text-xs p-3 rounded-lg border border-slate-800 focus:outline-none"></textarea>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-5 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                            Kirim Request (Execute)
+                        </button>
+                    </div>
+                </form>
             </div>
 
         </section>
@@ -612,7 +912,7 @@
                     </template>
                     <template x-if="!loadingApi && !lastResponse.data">
                         <div class="py-12 text-center text-slate-500 text-xs">
-                            Belum ada request yang dieksekusi.<br>Pilih salah satu aksi atau klik tombol untuk mengetes API.
+                            Belum ada request yang dieksekusi.<br>Pilih salah satu endpoint atau ganti persona untuk mengetes.
                         </div>
                     </template>
                     <template x-if="!loadingApi && lastResponse.data">
@@ -649,278 +949,78 @@
     </main>
 
     <!-- ======================================================== -->
-    <!-- MODALS: Add Stakeholder, Edit Role, Assign by Email, Dev -->
+    <!-- MODALS: Add Skill & Edit Skill                           -->
     <!-- ======================================================== -->
 
-    <!-- Modal 1: Add Stakeholder (Single or Batch) -->
-    <div x-show="showAddStakeholderModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-xl overflow-hidden" @click.away="showAddStakeholderModal = false">
+    <!-- Modal: Tambah Skill (POST /api/skills) -->
+    <div x-show="showAddSkillModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showAddSkillModal = false">
             <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
-                    <h3 class="font-bold text-slate-900 text-sm">Tambah Stakeholder ke Whitelist</h3>
-                    <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono">POST /stakeholders</code></p>
+                    <h3 class="font-bold text-slate-900 text-sm">Tambah Item Skillset Baru</h3>
+                    <p class="text-xs text-slate-500 font-mono">POST /api/skills</p>
                 </div>
-                <button type="button" @click="showAddStakeholderModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+                <button type="button" @click="showAddSkillModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
             </div>
 
-            <!-- Single or Batch Selector -->
-            <div class="p-5 space-y-4">
-                <div class="flex rounded-lg bg-slate-100 p-1 text-xs">
-                    <button type="button" @click="newStakeholderMode = 'single'" :class="newStakeholderMode === 'single' ? 'bg-white font-semibold text-ugm-blue shadow-xs' : 'text-slate-600'" class="flex-1 py-1.5 rounded transition text-center">
-                        Single Stakeholder
-                    </button>
-                    <button type="button" @click="newStakeholderMode = 'batch'" :class="newStakeholderMode === 'batch' ? 'bg-white font-semibold text-ugm-blue shadow-xs' : 'text-slate-600'" class="flex-1 py-1.5 rounded transition text-center">
-                        Batch (Banyak Data)
-                    </button>
-                </div>
-
-                <!-- Single Form -->
-                <template x-if="newStakeholderMode === 'single'">
-                    <form @submit.prevent="submitSingleStakeholder()" class="space-y-3 text-xs">
-                        <div>
-                            <label class="block font-medium text-slate-700 mb-1">Email <span class="text-rose-500">*</span></label>
-                            <input type="email" x-model="singleStakeholder.email" required placeholder="nama@mail.ugm.ac.id" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block font-medium text-slate-700 mb-1">Role <span class="text-rose-500">*</span></label>
-                                <select x-model="singleStakeholder.role" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
-                                    <option value="student">Mahasiswa (student)</option>
-                                    <option value="lecturer">Dosen (lecturer)</option>
-                                    <option value="admin">Admin (admin)</option>
-                                    <option value="assistant">Asisten (assistant)</option>
-                                    <option value="practitioner">Praktisi (practitioner)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block font-medium text-slate-700 mb-1">Nama Lengkap</label>
-                                <input type="text" x-model="singleStakeholder.name" placeholder="Nama lengkap" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3" x-show="singleStakeholder.role === 'student'">
-                            <div>
-                                <label class="block font-medium text-slate-700 mb-1">NIM (Khusus Mahasiswa)</label>
-                                <input type="text" x-model="singleStakeholder.nim" placeholder="21/123456/TK/12345" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
-                            </div>
-                            <div class="flex items-center pt-5">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" x-model="singleStakeholder.is_bypass" class="rounded text-ugm-blue">
-                                    <span class="font-medium text-slate-700">Bypass KRS</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
-                            <button type="button" @click="showAddStakeholderModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
-                                Batal
-                            </button>
-                            <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-ugm-blue hover:bg-ugm-dark text-white rounded-lg font-medium transition shadow-xs disabled:opacity-50">
-                                Simpan Stakeholder
-                            </button>
-                        </div>
-                    </form>
-                </template>
-
-                <!-- Batch Form -->
-                <template x-if="newStakeholderMode === 'batch'">
-                    <form @submit.prevent="submitBatchStakeholders()" class="space-y-3 text-xs">
-                        <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
-                            <template x-for="(item, index) in batchStakeholders" :key="index">
-                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <span class="font-bold text-2xs text-slate-500" x-text="'Stakeholder #' + (index + 1)"></span>
-                                        <button type="button" @click="removeBatchStakeholderRow(index)" :disabled="batchStakeholders.length <= 1" class="text-rose-500 hover:text-rose-700 text-xs disabled:opacity-30">✕</button>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="email" x-model="item.email" required placeholder="email@mail.ugm.ac.id *" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                                        <select x-model="item.role" required class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                                            <option value="student">Mahasiswa</option>
-                                            <option value="lecturer">Dosen</option>
-                                            <option value="admin">Admin</option>
-                                            <option value="assistant">Asisten</option>
-                                            <option value="practitioner">Praktisi</option>
-                                        </select>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <input type="text" x-model="item.name" placeholder="Nama" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                                        <input type="text" x-model="item.nim" placeholder="NIM" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                                        <label class="flex items-center gap-1.5 cursor-pointer text-2xs">
-                                            <input type="checkbox" x-model="item.is_bypass" class="rounded text-ugm-blue">
-                                            <span>Bypass</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                            <div class="flex gap-2">
-                                <button type="button" @click="addBatchStakeholderRow()" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium">
-                                    + Tambah Baris
-                                </button>
-                                <button type="button" @click="fillSampleBatchStakeholders()" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs">
-                                    Isi Contoh
-                                </button>
-                            </div>
-                            <div class="flex gap-2">
-                                <button type="button" @click="showAddStakeholderModal = false" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs">
-                                    Batal
-                                </button>
-                                <button type="submit" :disabled="loadingApi" class="px-4 py-1.5 bg-ugm-blue hover:bg-ugm-dark text-white rounded text-xs font-medium shadow-xs disabled:opacity-50">
-                                    Simpan Batch
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </template>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 2: Edit Stakeholder Role (by ID) -->
-    <div x-show="showEditRoleModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showEditRoleModal = false">
-            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+            <form @submit.prevent="submitAddSkill()" class="p-5 space-y-3 text-xs">
                 <div>
-                    <h3 class="font-bold text-slate-900 text-sm">Update Role Stakeholder</h3>
-                    <p class="text-xs text-slate-500 font-mono" x-text="editRoleTarget.email"></p>
-                </div>
-                <button type="button" @click="showEditRoleModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
-            </div>
-
-            <form @submit.prevent="submitEditRole()" class="p-5 space-y-3 text-xs">
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">Pilih Role Baru <span class="text-rose-500">*</span></label>
-                    <select x-model="editRoleTarget.role" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
-                        <option value="student">Mahasiswa (student)</option>
-                        <option value="lecturer">Dosen (lecturer)</option>
-                        <option value="admin">Admin (admin)</option>
-                        <option value="assistant">Asisten (assistant)</option>
-                        <option value="practitioner">Praktisi (practitioner)</option>
+                    <label class="block font-medium text-slate-700 mb-1">Pilih Role <span class="text-rose-500">*</span></label>
+                    <select x-model="newSkill.role_id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                        <template x-for="r in masterRoles" :key="r.id">
+                            <option :value="r.id" x-text="r.code + ' - ' + r.name"></option>
+                        </template>
                     </select>
                 </div>
-                <div x-show="editRoleTarget.role === 'student'" class="space-y-3">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">NIM (Mahasiswa)</label>
-                        <input type="text" x-model="editRoleTarget.nim" placeholder="21/123456/TK/12345" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
-                    </div>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" x-model="editRoleTarget.is_bypass" class="rounded text-ugm-blue">
-                        <span class="font-medium text-slate-700">Bypass KRS Status</span>
-                    </label>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Nama Skillset <span class="text-rose-500">*</span></label>
+                    <input type="text" x-model="newSkill.name" required placeholder="contoh: Docker & Containerization" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
                 </div>
-
                 <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
-                    <button type="button" @click="showEditRoleModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
+                    <button type="button" @click="showAddSkillModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
                         Batal
                     </button>
-                    <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition shadow-xs disabled:opacity-50">
-                        Update Role (PUT)
+                    <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-ugm-blue hover:bg-ugm-dark text-white rounded-lg font-bold transition shadow-xs disabled:opacity-50">
+                        Tambah Skill (POST)
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal 3: Assign Role by Email -->
-    <div x-show="showAssignRoleModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showAssignRoleModal = false">
+    <!-- Modal: Edit Skill (PUT /api/skills/{id}) -->
+    <div x-show="showEditSkillModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showEditSkillModal = false">
             <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
-                    <h3 class="font-bold text-slate-900 text-sm">Assign Role via Email</h3>
-                    <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono">POST /stakeholders/assign-role</code></p>
+                    <h3 class="font-bold text-slate-900 text-sm">Edit Item Skillset</h3>
+                    <p class="text-xs text-slate-500 font-mono" x-text="'PUT /api/skills/' + editSkillData.id"></p>
                 </div>
-                <button type="button" @click="showAssignRoleModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+                <button type="button" @click="showEditSkillModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
             </div>
 
-            <form @submit.prevent="submitAssignRoleByEmail()" class="p-5 space-y-3 text-xs">
+            <form @submit.prevent="submitEditSkill()" class="p-5 space-y-3 text-xs">
                 <div>
-                    <label class="block font-medium text-slate-700 mb-1">Email Stakeholder <span class="text-rose-500">*</span></label>
-                    <input type="email" x-model="assignRoleByEmailData.email" required placeholder="target@mail.ugm.ac.id" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
-                </div>
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">Target Role <span class="text-rose-500">*</span></label>
-                    <select x-model="assignRoleByEmailData.role" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
-                        <option value="student">Mahasiswa (student)</option>
-                        <option value="lecturer">Dosen (lecturer)</option>
-                        <option value="admin">Admin (admin)</option>
-                        <option value="assistant">Asisten (assistant)</option>
-                        <option value="practitioner">Praktisi (practitioner)</option>
+                    <label class="block font-medium text-slate-700 mb-1">Role</label>
+                    <select x-model="editSkillData.role_id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                        <template x-for="r in masterRoles" :key="r.id">
+                            <option :value="r.id" x-text="r.code + ' - ' + r.name"></option>
+                        </template>
                     </select>
                 </div>
-                <div x-show="assignRoleByEmailData.role === 'student'" class="space-y-3">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">NIM (Opsional)</label>
-                        <input type="text" x-model="assignRoleByEmailData.nim" placeholder="21/123456/TK/12345" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
-                    </div>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" x-model="assignRoleByEmailData.is_bypass" class="rounded text-ugm-blue">
-                        <span class="font-medium text-slate-700">Bypass KRS Status</span>
-                    </label>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Nama Skillset <span class="text-rose-500">*</span></label>
+                    <input type="text" x-model="editSkillData.name" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
                 </div>
-
                 <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
-                    <button type="button" @click="showAssignRoleModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
+                    <button type="button" @click="showEditSkillModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
                         Batal
                     </button>
-                    <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-ugm-blue hover:bg-ugm-dark text-white rounded-lg font-medium transition shadow-xs disabled:opacity-50">
-                        Kirim Perubahan Role
+                    <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition shadow-xs disabled:opacity-50">
+                        Update Skill (PUT)
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Modal 4: Quick Dev Token Generator -->
-    <div x-show="showDevTokenModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showDevTokenModal = false">
-            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-                <div>
-                    <h3 class="font-bold text-slate-900 text-sm">⚡ Dev Sanctum Token Generator</h3>
-                    <p class="text-xs text-slate-500">Buat Personal Access Token instan untuk testing lokal</p>
-                </div>
-                <button type="button" @click="showDevTokenModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
-            </div>
-
-            <div class="p-5 space-y-4 text-xs">
-                <!-- Select Existing User -->
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">Pilih User Terdaftar:</label>
-                    <div class="flex gap-2">
-                        <select x-model="selectedDevUserEmail" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
-                            <option value="">-- Pilih dari database --</option>
-                            <template x-for="u in devUsersList" :key="u.id">
-                                <option :value="u.email" x-text="u.email + ' (' + u.user_role + ')'"></option>
-                            </template>
-                        </select>
-                        <button type="button" @click="fetchDevUsers()" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-slate-600">🔄</button>
-                    </div>
-                </div>
-
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-slate-200"></div>
-                    <span class="flex-shrink mx-2 text-3xs text-slate-400 uppercase">atau ketik manual</span>
-                    <div class="flex-grow border-t border-slate-200"></div>
-                </div>
-
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">Email User:</label>
-                    <input type="email" x-model="manualDevEmail" placeholder="contoh: dosen.pengampu@mail.ugm.ac.id" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
-                </div>
-
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" x-model="createIfMissing" class="rounded text-ugm-blue">
-                    <span class="text-slate-600">Buat user admin baru jika email belum ada di database</span>
-                </label>
-
-                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
-                    <button type="button" @click="showDevTokenModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
-                        Tutup
-                    </button>
-                    <button type="button" @click="generateDevTokenAction()" :disabled="loadingApi" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-xs disabled:opacity-50">
-                        Buat Token & Pasang di Header
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -929,16 +1029,15 @@
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- Alpine.js Main Controller Script -->
+    <!-- Main Alpine.js Logic -->
     <script>
         function apiTester() {
             return {
-                // Config & State
-                apiPrefix: '/api/v1',
-                activeTab: '{{ $initialTab ?? "stakeholders" }}',
+                apiPrefix: '/api',
+                activeTab: 'modul-b',
                 bearerToken: localStorage.getItem('pad_test_bearer_token') || '',
+                activeUser: null,
                 loadingApi: false,
-                loadingStakeholders: false,
 
                 // Toast
                 toast: { show: false, message: '' },
@@ -948,7 +1047,7 @@
                     setTimeout(() => { this.toast.show = false; }, 3500);
                 },
 
-                // Last Response / Log
+                // Last Response / Inspector
                 lastResponse: {
                     status: null,
                     statusText: '',
@@ -960,74 +1059,77 @@
                 },
                 requestHistory: [],
 
-                // Modals
-                showAddStakeholderModal: false,
-                showEditRoleModal: false,
-                showAssignRoleModal: false,
-                showDevTokenModal: false,
+                // MODUL B STATE
+                modulBSection: 'users',
+                usersList: [],
+                usersMeta: { current_page: 1, last_page: 1, total: 0, per_page: 15 },
+                userFilters: { search: '', user_role: '', status: '', is_bypass: '', per_page: 15 },
+                loadingUsers: false,
 
-                // Stakeholders Tab
-                stakeholdersList: [],
-                stakeholdersMeta: { current_page: 1, last_page: 1, total: 0, per_page: 15 },
-                stakeholderFilters: { search: '', role: '', status: '', is_bypass: '', per_page: '15' },
-
-                // New Stakeholder Form
-                newStakeholderMode: 'single',
-                singleStakeholder: { email: '', role: 'student', name: '', nim: '', is_bypass: false },
-                batchStakeholders: [
-                    { email: 'mhs1@mail.ugm.ac.id', role: 'student', name: 'Mhs 1', nim: '21/111111/TK/11111', is_bypass: false },
-                    { email: 'asisten1@mail.ugm.ac.id', role: 'assistant', name: 'Asisten 1', nim: '', is_bypass: false }
-                ],
-
-                // Edit Role Target
-                editRoleTarget: { id: null, email: '', role: 'student', nim: '', is_bypass: false },
-
-                // Assign Role by Email
-                assignRoleByEmailData: { email: '', role: 'student', nim: '', is_bypass: false },
-
-                // Lecturer Tab
-                lecturerMode: 'single',
-                lecturerEndpoint: 'admin/initiate-lecturer',
-                singleLecturer: { email: '', name: '' },
+                // B2: Inisiasi Dosen
+                lecturerFormMode: 'single',
+                singleLecturer: { email: '', name: '', role: 'admin' },
                 batchLecturers: [
-                    { email: 'dosen.koordinator@mail.ugm.ac.id', name: 'Prof. Dosen Koordinator' },
-                    { email: 'dosen.anggota@mail.ugm.ac.id', name: 'Dr. Dosen Anggota' }
+                    { email: 'dosen.koordinator@mail.ugm.ac.id', name: 'Dr. Dosen Koordinator', role: 'admin' },
+                    { email: 'dosen.anggota@mail.ugm.ac.id', name: 'Ir. Dosen Anggota, Ph.D.', role: 'lecturer' }
                 ],
 
-                // Google Auth Tab
-                googleRedirectUri: window.location.origin + '/auth/google/callback',
-                googleGeneratedUrl: '',
-                googleAuthCallback: {
-                    code: '{{ $oauthCode ?? "" }}',
-                    token: '',
-                    redirect_uri: window.location.origin + '/auth/google/callback'
+                // B3: Manual Whitelist
+                manualWhitelist: { email: '', user_role: 'student', name: '', nim: '', is_bypass: false },
+
+                // B5: Exclusive Team
+                exclusiveTeam: {
+                    team_name: 'GEMASTIK Software Team ' + Math.floor(Math.random() * 900 + 100),
+                    project_name: 'Smart Vision Platform',
+                    members: [
+                        { email: 'mhs1.gemastik@mail.ugm.ac.id', name: 'Budi Leader', nim: '21/470001/SV/19001', role_id: 1 },
+                        { email: 'mhs2.gemastik@mail.ugm.ac.id', name: 'Siti UIUX', nim: '21/470002/SV/19002', role_id: 2 }
+                    ]
                 },
 
-                // Universal Console
-                consoleReq: {
-                    method: 'GET',
-                    path: '/stakeholders',
-                    useAuth: false,
-                    body: ''
+                // MODUL C STATE
+                settingsForm: {
+                    is_role_2_required: false,
+                    registration_timeline: '',
+                    registration_terms: '',
+                    registration_status: 'open',
+                    academic_year: '2026/2027'
                 },
+                masterRoles: [],
+                showAddSkillModal: false,
+                newSkill: { role_id: 1, name: '' },
+                showEditSkillModal: false,
+                editSkillData: { id: null, role_id: 1, name: '' },
 
-                // Dev Token Modal
-                devUsersList: [],
-                selectedDevUserEmail: '',
-                manualDevEmail: '',
-                createIfMissing: true,
+                // MODUL D STATE
+                modulDSection: 'form',
+                profilingConfigData: { is_bypass: false, is_role_2_required: false, is_locked: false },
+                profilingForm: {
+                    nim: '',
+                    role_1_id: '',
+                    role_2_id: '',
+                    portfolio_link: '',
+                    skill_ids: []
+                },
+                myTeamData: { has_team: false, final_role: null, team: null },
 
-                // Init
+                // Console
+                consoleReq: { method: 'GET', path: '/users', useAuth: true, body: '' },
+
                 initApp() {
-                    this.fetchStakeholders(1);
-                    this.fetchDevUsers();
-                    if ('{{ $oauthCode ?? "" }}') {
-                        this.showToast('OAuth Authorization Code terdeteksi!');
+                    if (this.bearerToken) {
+                        this.fetchActiveProfile();
+                    } else {
+                        // Auto-login as default Dosen for smooth experience
+                        this.loginAsPersona('dosen.pengampu@mail.ugm.ac.id', 'lecturer', 'Dr. Dosen Pengampu, M.T.', false);
                     }
+                    this.fetchUsers(1);
+                    this.fetchSystemSettings();
+                    this.fetchMasterRoles();
                 },
 
-                // Utility: Headers builder
-                getHeaders(includeAuth = false) {
+                // Headers
+                getHeaders(includeAuth = true) {
                     const headers = {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
@@ -1039,19 +1141,26 @@
                     return headers;
                 },
 
-                // Utility: Base API caller with timing & logging
-                async makeRequest(method, endpoint, body = null, requireAuth = false) {
+                // Base Make Request
+                async makeRequest(method, endpoint, body = null, isFormData = false) {
                     this.loadingApi = true;
                     const startTime = performance.now();
                     const fullUrl = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? endpoint : this.apiPrefix + (endpoint.startsWith('/') ? endpoint : '/' + endpoint));
 
                     try {
+                        const headers = isFormData ? {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                            ...(this.bearerToken ? { 'Authorization': 'Bearer ' + this.bearerToken } : {})
+                        } : this.getHeaders(true);
+
                         const options = {
                             method: method.toUpperCase(),
-                            headers: this.getHeaders(requireAuth || !!this.bearerToken)
+                            headers: headers
                         };
+
                         if (body && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
-                            options.body = typeof body === 'string' ? body : JSON.stringify(body);
+                            options.body = isFormData ? body : (typeof body === 'string' ? body : JSON.stringify(body));
                         }
 
                         const res = await fetch(fullUrl, options);
@@ -1084,7 +1193,7 @@
                         const endTime = performance.now();
                         this.lastResponse = {
                             status: 0,
-                            statusText: 'Network / Client Error',
+                            statusText: 'Client Error',
                             duration: Math.round(endTime - startTime),
                             method: method.toUpperCase(),
                             url: fullUrl,
@@ -1097,279 +1206,305 @@
                     }
                 },
 
+                // Persona switcher
+                async loginAsPersona(email, role, name, isBypass = false) {
+                    try {
+                        const res = await fetch('/dev/generate-token', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                email: email,
+                                user_role: role,
+                                name: name,
+                                is_bypass: isBypass,
+                                create_if_missing: true
+                            })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data?.token) {
+                            this.setToken(data.token);
+                            this.activeUser = data.user;
+                            this.showToast('Login sebagai ' + name + ' (' + role + ')');
+                            if (this.activeTab === 'modul-d') {
+                                this.fetchProfilingConfig();
+                            }
+                        }
+                    } catch (e) {
+                        this.showToast('Error persona: ' + e.message);
+                    }
+                },
+
+                async fetchActiveProfile() {
+                    const { res, data } = await this.makeRequest('GET', '/api/auth/me');
+                    if (res && res.ok && data?.data) {
+                        this.activeUser = data.data;
+                    }
+                },
+
+                setToken(t) {
+                    this.bearerToken = t;
+                    localStorage.setItem('pad_test_bearer_token', t);
+                },
+
+                clearToken() {
+                    this.bearerToken = '';
+                    this.activeUser = null;
+                    localStorage.removeItem('pad_test_bearer_token');
+                    this.showToast('Token dibersihkan.');
+                },
+
+                copyToClipboard(text, msg) {
+                    navigator.clipboard.writeText(text).then(() => this.showToast(msg));
+                },
+
                 // ==========================================
-                // STAKEHOLDERS ACTIONS
+                // MODUL B FUNCTIONS
                 // ==========================================
-                async fetchStakeholders(page = 1) {
-                    this.loadingStakeholders = true;
-                    let url = this.apiPrefix + '/stakeholders?page=' + page;
-                    if (this.stakeholderFilters.per_page) url += '&per_page=' + this.stakeholderFilters.per_page;
-                    if (this.stakeholderFilters.search) url += '&search=' + encodeURIComponent(this.stakeholderFilters.search);
-                    if (this.stakeholderFilters.role) url += '&role=' + encodeURIComponent(this.stakeholderFilters.role);
-                    if (this.stakeholderFilters.status) url += '&status=' + encodeURIComponent(this.stakeholderFilters.status);
-                    if (this.stakeholderFilters.is_bypass) url += '&is_bypass=' + encodeURIComponent(this.stakeholderFilters.is_bypass);
+                async fetchUsers(page = 1) {
+                    this.loadingUsers = true;
+                    let url = this.apiPrefix + '/users?page=' + page;
+                    if (this.userFilters.search) url += '&search=' + encodeURIComponent(this.userFilters.search);
+                    if (this.userFilters.user_role) url += '&user_role=' + encodeURIComponent(this.userFilters.user_role);
+                    if (this.userFilters.status) url += '&status=' + encodeURIComponent(this.userFilters.status);
+                    if (this.userFilters.is_bypass) url += '&is_bypass=' + encodeURIComponent(this.userFilters.is_bypass);
+                    if (this.userFilters.per_page) url += '&per_page=' + this.userFilters.per_page;
 
                     const { res, data } = await this.makeRequest('GET', url);
-                    this.loadingStakeholders = false;
-
+                    this.loadingUsers = false;
                     if (res && res.ok && data) {
-                        this.stakeholdersList = data.data || [];
-                        this.stakeholdersMeta = data.meta || { current_page: 1, last_page: 1, total: this.stakeholdersList.length };
+                        this.usersList = data.data || [];
+                        this.usersMeta = data.meta || { current_page: 1, last_page: 1, total: this.usersList.length };
                     }
                 },
 
-                async getStakeholderDetail(id) {
-                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/stakeholders/' + id);
+                async deleteUser(user) {
+                    if (!confirm(`Hapus pengguna "${user.name || user.email}" dari whitelist?`)) return;
+
+                    const { res, data } = await this.makeRequest('DELETE', this.apiPrefix + '/users/' + user.id);
                     if (res && res.ok) {
-                        this.showToast('Data stakeholder #' + id + ' berhasil diambil!');
-                    }
-                },
-
-                openEditRoleModal(item) {
-                    this.editRoleTarget = {
-                        id: item.id,
-                        email: item.email,
-                        role: item.user_role || 'student',
-                        nim: item.student_profile?.nim || '',
-                        is_bypass: item.student_profile?.is_bypass || false
-                    };
-                    this.showEditRoleModal = true;
-                },
-
-                async submitEditRole() {
-                    const payload = {
-                        role: this.editRoleTarget.role
-                    };
-                    if (this.editRoleTarget.role === 'student') {
-                        if (this.editRoleTarget.nim) payload.nim = this.editRoleTarget.nim;
-                        payload.is_bypass = this.editRoleTarget.is_bypass;
-                    }
-
-                    const { res, data } = await this.makeRequest('PUT', this.apiPrefix + '/stakeholders/' + this.editRoleTarget.id + '/role', payload);
-                    if (res && res.ok) {
-                        this.showToast('Role berhasil diperbarui!');
-                        this.showEditRoleModal = false;
-                        this.fetchStakeholders(this.stakeholdersMeta.current_page);
-                        this.fetchDevUsers();
+                        this.showToast('Pengguna berhasil dihapus dari whitelist!');
+                        this.fetchUsers(this.usersMeta.current_page);
                     } else {
-                        this.showToast('Gagal update role: ' + (data?.message || 'Error'));
+                        this.showToast('Gagal hapus: ' + (data?.message || 'Error'));
                     }
                 },
 
-                async submitAssignRoleByEmail() {
-                    const payload = {
-                        email: this.assignRoleByEmailData.email,
-                        role: this.assignRoleByEmailData.role
-                    };
-                    if (this.assignRoleByEmailData.role === 'student') {
-                        if (this.assignRoleByEmailData.nim) payload.nim = this.assignRoleByEmailData.nim;
-                        payload.is_bypass = this.assignRoleByEmailData.is_bypass;
-                    }
-
-                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/stakeholders/assign-role', payload);
-                    if (res && res.ok) {
-                        this.showToast('Role via email berhasil diperbarui!');
-                        this.showAssignRoleModal = false;
-                        this.fetchStakeholders(this.stakeholdersMeta.current_page);
-                        this.fetchDevUsers();
-                    } else {
-                        this.showToast('Gagal assign role: ' + (data?.message || 'Error'));
-                    }
+                async generateDevTokenForUser(email) {
+                    await this.loginAsPersona(email, 'student', email);
                 },
 
-                async deleteStakeholder(item) {
-                    if (!confirm(`Apakah Anda yakin ingin menghapus stakeholder "${item.name || item.email}"?`)) return;
-
-                    const { res, data } = await this.makeRequest('DELETE', this.apiPrefix + '/stakeholders/' + item.id);
-                    if (res && res.ok) {
-                        this.showToast('Stakeholder berhasil dihapus!');
-                        this.fetchStakeholders(this.stakeholdersMeta.current_page);
-                        this.fetchDevUsers();
-                    } else {
-                        this.showToast('Gagal menghapus: ' + (data?.message || 'Error'));
-                    }
-                },
-
-                async submitSingleStakeholder() {
-                    const payload = {
-                        email: this.singleStakeholder.email,
-                        role: this.singleStakeholder.role,
-                        name: this.singleStakeholder.name || null
-                    };
-                    if (this.singleStakeholder.role === 'student') {
-                        if (this.singleStakeholder.nim) payload.nim = this.singleStakeholder.nim;
-                        payload.is_bypass = this.singleStakeholder.is_bypass;
-                    }
-
-                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/stakeholders', payload);
-                    if (res && (res.status === 201 || res.status === 200)) {
-                        this.showToast('Stakeholder berhasil ditambahkan ke whitelist!');
-                        this.showAddStakeholderModal = false;
-                        this.singleStakeholder = { email: '', role: 'student', name: '', nim: '', is_bypass: false };
-                        this.fetchStakeholders(1);
-                        this.fetchDevUsers();
-                    } else {
-                        this.showToast('Error: ' + (data?.message || 'Gagal menyimpan'));
-                    }
-                },
-
-                addBatchStakeholderRow() {
-                    this.batchStakeholders.push({ email: '', role: 'student', name: '', nim: '', is_bypass: false });
-                },
-
-                removeBatchStakeholderRow(idx) {
-                    if (this.batchStakeholders.length > 1) this.batchStakeholders.splice(idx, 1);
-                },
-
-                fillSampleBatchStakeholders() {
-                    this.batchStakeholders = [
-                        { email: 'mhs1.' + Date.now() + '@mail.ugm.ac.id', role: 'student', name: 'Mahasiswa Satu', nim: '21/470001/SV/19001', is_bypass: false },
-                        { email: 'asprak.' + Date.now() + '@mail.ugm.ac.id', role: 'assistant', name: 'Asisten Lab', nim: '20/460002/SV/18002', is_bypass: false },
-                        { email: 'praktisi.' + Date.now() + '@mail.ugm.ac.id', role: 'practitioner', name: 'Praktisi PT Maju', nim: '', is_bypass: false }
-                    ];
-                },
-
-                async submitBatchStakeholders() {
-                    const payload = {
-                        stakeholders: this.batchStakeholders
-                    };
-
-                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/stakeholders', payload);
-                    if (res && (res.status === 201 || res.status === 200)) {
-                        this.showToast('Batch stakeholder berhasil disimpan!');
-                        this.showAddStakeholderModal = false;
-                        this.fetchStakeholders(1);
-                        this.fetchDevUsers();
-                    } else {
-                        this.showToast('Error: ' + (data?.message || 'Gagal menyimpan batch'));
-                    }
-                },
-
-                // ==========================================
-                // LECTURER ACTIONS
-                // ==========================================
                 async submitSingleLecturer() {
-                    const endpoint = this.apiPrefix + '/' + this.lecturerEndpoint;
-                    const payload = {
-                        email: this.singleLecturer.email,
-                        name: this.singleLecturer.name || null
-                    };
-
-                    const { res, data } = await this.makeRequest('POST', endpoint, payload);
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/admin/lecturers', this.singleLecturer);
                     if (res && (res.status === 201 || res.status === 200)) {
-                        this.showToast('Dosen pengampu berhasil diinisiasi sebagai Full Admin!');
-                        this.singleLecturer = { email: '', name: '' };
-                        this.fetchDevUsers();
+                        this.showToast('Dosen pengampu berhasil diinisiasi!');
+                        this.singleLecturer = { email: '', name: '', role: 'admin' };
+                        this.fetchUsers(1);
                     } else {
                         this.showToast('Error: ' + (data?.message || 'Gagal inisiasi'));
                     }
                 },
 
-                addBatchLecturerRow() {
-                    this.batchLecturers.push({ email: '', name: '' });
-                },
-
-                removeBatchLecturerRow(idx) {
-                    if (this.batchLecturers.length > 1) this.batchLecturers.splice(idx, 1);
-                },
-
-                fillSampleBatchLecturers() {
-                    const rnd = Math.floor(Math.random() * 1000);
-                    this.batchLecturers = [
-                        { email: `dosen.utama${rnd}@mail.ugm.ac.id`, name: 'Dr. Dosen Utama, M.Kom.' },
-                        { email: `dosen.pendamping${rnd}@mail.ugm.ac.id`, name: 'Ir. Dosen Pendamping, Ph.D.' }
-                    ];
-                },
-
-                async submitBatchLecturer() {
-                    const endpoint = this.apiPrefix + '/' + this.lecturerEndpoint;
-                    const payload = {
-                        lecturers: this.batchLecturers
-                    };
-
-                    const { res, data } = await this.makeRequest('POST', endpoint, payload);
+                async submitBatchLecturers() {
+                    const payload = { lecturers: this.batchLecturers };
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/admin/lecturers', payload);
                     if (res && (res.status === 201 || res.status === 200)) {
                         this.showToast('Batch dosen pengampu berhasil diinisiasi!');
-                        this.fetchDevUsers();
+                        this.fetchUsers(1);
                     } else {
-                        this.showToast('Error: ' + (data?.message || 'Gagal inisiasi'));
+                        this.showToast('Error: ' + (data?.message || 'Gagal inisiasi batch'));
+                    }
+                },
+
+                async submitManualWhitelist() {
+                    const payload = { ...this.manualWhitelist };
+                    if (payload.user_role !== 'student') {
+                        delete payload.nim;
+                        delete payload.is_bypass;
+                    }
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/users/whitelist', payload);
+                    if (res && (res.status === 201 || res.status === 200)) {
+                        this.showToast('Pengguna berhasil didaftarkan ke whitelist!');
+                        this.manualWhitelist = { email: '', user_role: 'student', name: '', nim: '', is_bypass: false };
+                        this.fetchUsers(1);
+                    } else {
+                        this.showToast('Error: ' + (data?.message || 'Gagal whitelist'));
+                    }
+                },
+
+                generateSampleCsvAndUpload() {
+                    const rnd = Math.floor(Math.random() * 800 + 100);
+                    const csvContent = "email,nim,name\n" +
+                        `mhs.krs${rnd}_1@mail.ugm.ac.id,21/${rnd}001/SV/19001,Mhs KRS ${rnd} A\n` +
+                        `mhs.krs${rnd}_2@mail.ugm.ac.id,21/${rnd}002/SV/19002,Mhs KRS ${rnd} B\n`;
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const file = new File([blob], `krs_sample_${rnd}.csv`, { type: 'text/csv' });
+
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    document.getElementById('krsImportFile').files = dt.files;
+                    this.showToast('File contoh "krs_sample_' + rnd + '.csv" siap di-import!');
+                },
+
+                async submitImportWhitelist() {
+                    const fileInput = document.getElementById('krsImportFile');
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        this.showToast('Pilih file CSV atau Excel terlebih dahulu!');
+                        return;
+                    }
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/users/whitelist/import', formData, true);
+                    if (res && (res.status === 201 || res.status === 200)) {
+                        this.showToast('Import berhasil! ' + (data?.message || ''));
+                        fileInput.value = '';
+                        this.fetchUsers(1);
+                    } else {
+                        this.showToast('Gagal import: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async submitExclusiveTeam() {
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/teams/exclusive', this.exclusiveTeam);
+                    if (res && (res.status === 201 || res.status === 200)) {
+                        this.showToast('Tim eksklusif GEMASTIK berhasil didaftarkan!');
+                        this.fetchUsers(1);
+                    } else {
+                        this.showToast('Error tim eksklusif: ' + (data?.message || 'Gagal'));
                     }
                 },
 
                 // ==========================================
-                // AUTH & SSO ACTIONS
+                // MODUL C FUNCTIONS
                 // ==========================================
-                async getGoogleRedirectUrl() {
-                    let endpoint = this.apiPrefix + '/auth/google/redirect';
-                    if (this.googleRedirectUri) {
-                        endpoint += '?redirect_uri=' + encodeURIComponent(this.googleRedirectUri);
-                    }
-
-                    const { res, data } = await this.makeRequest('GET', endpoint);
-                    if (res && res.ok && data?.url) {
-                        this.googleGeneratedUrl = data.url;
-                        this.showToast('URL Google OAuth berhasil dibuat!');
-                    } else {
-                        this.showToast('Error: ' + (data?.message || 'Gagal mengambil URL'));
+                async fetchSystemSettings() {
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/settings');
+                    if (res && res.ok && data?.data) {
+                        this.settingsForm = {
+                            is_role_2_required: data.data.is_role_2_required,
+                            registration_timeline: data.data.registration_timeline || '',
+                            registration_terms: data.data.registration_terms || '',
+                            registration_status: data.data.registration_status || 'open',
+                            academic_year: data.data.academic_year || '2026/2027'
+                        };
                     }
                 },
 
-                async submitGoogleCallback() {
-                    const endpoint = this.apiPrefix + '/auth/google/callback';
-                    const payload = {};
-                    if (this.googleAuthCallback.code) payload.code = this.googleAuthCallback.code;
-                    if (this.googleAuthCallback.token) payload.token = this.googleAuthCallback.token;
-                    if (this.googleAuthCallback.redirect_uri) payload.redirect_uri = this.googleAuthCallback.redirect_uri;
-
-                    const { res, data } = await this.makeRequest('POST', endpoint, payload);
-                    if (res && res.ok && data?.token) {
-                        this.setToken(data.token);
-                        this.showToast('Login SSO berhasil! Sanctum token aktif.');
-                    } else {
-                        this.showToast('Login gagal: ' + (data?.message || 'Cek console/response'));
-                    }
-                },
-
-                async fetchAuthMe() {
-                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/auth/me', null, true);
+                async updateSystemSettings() {
+                    const { res, data } = await this.makeRequest('PUT', this.apiPrefix + '/settings', this.settingsForm);
                     if (res && res.ok) {
-                        this.showToast('Profil pengguna (/me) berhasil diambil!');
+                        this.showToast('Pengaturan sistem berhasil diperbarui!');
+                        this.fetchSystemSettings();
                     } else {
-                        this.showToast('Error /me: ' + (data?.message || 'Token tidak valid / expired'));
+                        this.showToast('Gagal update settings: ' + (data?.message || 'Error'));
                     }
                 },
 
-                async submitLogout() {
-                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/auth/logout', null, true);
-                    if (res && res.ok) {
-                        this.showToast('Berhasil logout! Token dihapus.');
-                        this.clearToken();
+                async fetchMasterRoles() {
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/roles');
+                    if (res && res.ok && data?.data) {
+                        this.masterRoles = data.data;
+                    }
+                },
+
+                async submitAddSkill() {
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/skills', this.newSkill);
+                    if (res && (res.status === 201 || res.status === 200)) {
+                        this.showToast('Skill baru berhasil ditambahkan!');
+                        this.showAddSkillModal = false;
+                        this.newSkill.name = '';
+                        this.fetchMasterRoles();
                     } else {
-                        this.showToast('Logout gagal: ' + (data?.message || 'Error'));
+                        this.showToast('Gagal tambah skill: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                openEditSkillModal(skill, roleId) {
+                    this.editSkillData = { id: skill.id, role_id: roleId, name: skill.name };
+                    this.showEditSkillModal = true;
+                },
+
+                async submitEditSkill() {
+                    const { res, data } = await this.makeRequest('PUT', this.apiPrefix + '/skills/' + this.editSkillData.id, {
+                        name: this.editSkillData.name,
+                        role_id: this.editSkillData.role_id
+                    });
+                    if (res && res.ok) {
+                        this.showToast('Skill berhasil diperbarui!');
+                        this.showEditSkillModal = false;
+                        this.fetchMasterRoles();
+                    } else {
+                        this.showToast('Gagal update skill: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async deleteSkill(skill) {
+                    if (!confirm(`Hapus skill "${skill.name}"?`)) return;
+
+                    const { res, data } = await this.makeRequest('DELETE', this.apiPrefix + '/skills/' + skill.id);
+                    if (res && res.ok) {
+                        this.showToast('Skill berhasil dihapus!');
+                        this.fetchMasterRoles();
+                    } else {
+                        this.showToast('Gagal hapus: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                // ==========================================
+                // MODUL D FUNCTIONS
+                // ==========================================
+                async fetchProfilingConfig() {
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/student/profiling-config');
+                    if (res && res.ok && data?.data) {
+                        this.profilingConfigData = data.data.config || {};
+                        if (data.data.roles) {
+                            this.masterRoles = data.data.roles;
+                        }
+                        if (data.data.current_profile) {
+                            const cp = data.data.current_profile;
+                            this.profilingForm.nim = cp.nim || this.profilingForm.nim;
+                            this.profilingForm.role_1_id = cp.role_1_id || '';
+                            this.profilingForm.role_2_id = cp.role_2_id || '';
+                            this.profilingForm.portfolio_link = cp.portfolio_link || '';
+                            this.profilingForm.skill_ids = cp.selected_skill_ids || [];
+                        }
+                    }
+                },
+
+                async submitStudentProfile() {
+                    if (this.profilingForm.role_1_id && this.profilingForm.role_2_id && this.profilingForm.role_1_id == this.profilingForm.role_2_id) {
+                        this.showToast('Pilihan Role 1 dan Role 2 tidak boleh sama!');
+                        return;
+                    }
+
+                    const payload = {
+                        nim: this.profilingForm.nim,
+                        role_1_id: parseInt(this.profilingForm.role_1_id),
+                        role_2_id: this.profilingForm.role_2_id ? parseInt(this.profilingForm.role_2_id) : null,
+                        portfolio_link: this.profilingForm.portfolio_link,
+                        skill_ids: this.profilingForm.skill_ids.map(id => parseInt(id))
+                    };
+
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/student/profile', payload);
+                    if (res && (res.status === 201 || res.status === 200)) {
+                        this.showToast('Profil dan keahlian berhasil disimpan & dihitung skornya!');
+                        this.fetchProfilingConfig();
+                    } else {
+                        this.showToast('Gagal simpan: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async fetchStudentMyTeam() {
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/student/my-team');
+                    if (res && res.ok && data?.data) {
+                        this.myTeamData = data.data;
                     }
                 },
 
                 // ==========================================
                 // UNIVERSAL CONSOLE
                 // ==========================================
-                applyPreset(method, path, body = '', useAuth = false) {
-                    this.consoleReq.method = method;
-                    this.consoleReq.path = path;
-                    this.consoleReq.body = body;
-                    this.consoleReq.useAuth = useAuth;
-                },
-
-                formatConsoleJson() {
-                    try {
-                        if (this.consoleReq.body.trim()) {
-                            const parsed = JSON.parse(this.consoleReq.body);
-                            this.consoleReq.body = JSON.stringify(parsed, null, 2);
-                        }
-                    } catch (e) {
-                        this.showToast('Format JSON tidak valid!');
-                    }
-                },
-
                 async executeConsoleRequest() {
                     let body = null;
                     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(this.consoleReq.method) && this.consoleReq.body.trim()) {
@@ -1380,97 +1515,17 @@
                             return;
                         }
                     }
-
-                    await this.makeRequest(this.consoleReq.method, this.consoleReq.path, body, this.consoleReq.useAuth);
+                    await this.makeRequest(this.consoleReq.method, this.consoleReq.path, body);
                 },
 
-                // ==========================================
-                // DEV TOKEN ACTIONS
-                // ==========================================
-                async fetchDevUsers() {
-                    try {
-                        const res = await fetch('/dev/users');
-                        if (res.ok) {
-                            const data = await res.json();
-                            this.devUsersList = data.data || [];
-                        }
-                    } catch (e) {}
-                },
-
-                async generateDevTokenAction() {
-                    const targetEmail = this.selectedDevUserEmail || this.manualDevEmail;
-                    if (!targetEmail) {
-                        this.showToast('Pilih atau masukkan email user!');
-                        return;
-                    }
-
-                    await this.generateDevTokenForUser(targetEmail);
-                    this.showDevTokenModal = false;
-                },
-
-                async generateDevTokenForUser(email) {
-                    this.loadingApi = true;
-                    try {
-                        const res = await fetch('/dev/generate-token', {
-                            method: 'POST',
-                            headers: this.getHeaders(),
-                            body: JSON.stringify({
-                                email: email,
-                                create_if_missing: this.createIfMissing
-                            })
-                        });
-
-                        const data = await res.json();
-                        if (res.ok && data?.token) {
-                            this.setToken(data.token);
-                            this.showToast('Sanctum token dibuat untuk ' + email);
-                            this.lastResponse = {
-                                status: res.status,
-                                statusText: res.statusText,
-                                duration: 15,
-                                method: 'POST',
-                                url: '/dev/generate-token',
-                                timestamp: new Date().toLocaleTimeString(),
-                                data: data
-                            };
-                            this.fetchDevUsers();
-                        } else {
-                            this.showToast('Gagal: ' + (data?.message || 'Error'));
-                        }
-                    } catch (e) {
-                        this.showToast('Error dev token: ' + e.message);
-                    } finally {
-                        this.loadingApi = false;
-                    }
-                },
-
-                setToken(token) {
-                    this.bearerToken = token;
-                    localStorage.setItem('pad_test_bearer_token', token);
-                },
-
-                clearToken() {
-                    this.bearerToken = '';
-                    localStorage.removeItem('pad_test_bearer_token');
-                    this.showToast('Token dihapus dari tester.');
-                },
-
-                copyToClipboard(text, successMsg) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        this.showToast(successMsg);
-                    }).catch(() => {
-                        this.showToast('Gagal menyalin text.');
-                    });
-                },
-
-                // Helpers for badge classes
+                // Badge Helper
                 getRoleBadgeClass(role) {
                     switch (role) {
                         case 'admin': return 'bg-emerald-100 text-emerald-800 border border-emerald-300';
                         case 'lecturer': return 'bg-purple-100 text-purple-800 border border-purple-300';
                         case 'student': return 'bg-sky-100 text-sky-800 border border-sky-300';
-                        case 'assistant': return 'bg-amber-100 text-amber-800 border border-amber-300';
-                        case 'practitioner': return 'bg-teal-100 text-teal-800 border border-teal-300';
+                        case 'assistant': return 'bg-teal-100 text-teal-800 border border-teal-300';
+                        case 'practitioner': return 'bg-amber-100 text-amber-800 border border-amber-300';
                         default: return 'bg-slate-100 text-slate-700';
                     }
                 },
