@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\StudentProfile;
 use App\Models\StudentRoleEvaluation;
 use App\Models\Team;
+use App\Rules\NimFormat;
 use App\Services\ScoringEngineService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -87,7 +88,7 @@ class StudentProfilingController extends Controller
 
         // 2. Validate input fields
         $validated = $request->validate([
-            'nim' => ['required', 'string', 'max:50'],
+            'nim' => ['required', 'string', new NimFormat],
             'role_1_id' => ['required', 'integer', 'exists:roles,id'],
             'role_2_id' => ['nullable', 'integer', 'exists:roles,id'],
             'skill_ids' => ['nullable', 'array'],

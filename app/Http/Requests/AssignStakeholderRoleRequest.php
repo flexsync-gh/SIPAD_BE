@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\UserRole;
+use App\Rules\NimFormat;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,7 +34,7 @@ class AssignStakeholderRoleRequest extends FormRequest
         return [
             'email' => ['nullable', 'email', 'max:128'],
             'role' => ['required', $roleValidator],
-            'nim' => ['nullable', 'string', 'max:50'],
+            'nim' => ['nullable', 'string', new NimFormat],
             'is_bypass' => ['nullable', 'boolean'],
         ];
     }

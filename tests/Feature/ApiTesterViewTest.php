@@ -23,6 +23,38 @@ class ApiTesterViewTest extends TestCase
         $response->assertSeeText('Modul B:');
         $response->assertSeeText('Modul C:');
         $response->assertSeeText('Modul D:');
+        $response->assertSeeText('Modul E:');
+        $response->assertSeeText('Modul F:');
+        $response->assertSeeText('Modul G:');
+        $response->assertSeeText('Modul H:');
+    }
+
+    /**
+     * Test dev seed sample data creates required simulation data.
+     */
+    public function test_dev_seed_sample_data_endpoint(): void
+    {
+        $response = $this->postJson('/dev/seed-sample-data');
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'status' => 'success',
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'dosen.pengampu@mail.ugm.ac.id',
+            'user_role' => UserRole::Lecturer->value,
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'asisten.lab@mail.ugm.ac.id',
+            'user_role' => UserRole::Assistant->value,
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'mhs1.pad@mail.ugm.ac.id',
+            'user_role' => UserRole::Student->value,
+        ]);
     }
 
     /**

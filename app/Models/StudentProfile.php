@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Rules\NimFormat;
 use Database\Factories\StudentProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Validation\ValidationException;
 
 class StudentProfile extends Model
 {
@@ -28,6 +30,22 @@ class StudentProfile extends Model
         'team_id',
         'portfolio_link',
     ];
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (StudentProfile $profile): void {
+            if ($profile->nim !== null && $profile->nim !== '') {
+                if (! preg_match(NimFormat::PATTERN, $profile->nim)) {
+                    throw ValidationException::withMessages([
+                        'nim' => ['Format NIM tidak valid. Format yang benar: 12/123456/SV/12345 (2 digit angka/6 digit angka/2 huruf/5 digit angka).'],
+                    ]);
+                }
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Enums\UserRole;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Rules\NimFormat;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -74,6 +75,16 @@ class KrsWhitelistImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
                 $this->errors[] = [
                     'row' => $rowIndex,
                     'error' => 'Format email tidak valid atau kolom email kosong.',
+                    'data' => $data,
+                ];
+
+                continue;
+            }
+
+            if (! empty($nim) && ! preg_match(NimFormat::PATTERN, $nim)) {
+                $this->errors[] = [
+                    'row' => $rowIndex,
+                    'error' => "Format NIM '{$nim}' tidak valid. Format yang benar: 12/123456/SV/12345 (2 digit angka/6 digit angka/2 huruf/5 digit angka).",
                     'data' => $data,
                 ];
 

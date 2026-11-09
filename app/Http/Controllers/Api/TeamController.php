@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\User;
+use App\Rules\NimFormat;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -387,6 +388,7 @@ class TeamController extends Controller
             'supervisor' => ['nullable', 'exists:users,id'],
             'supervisor_id' => ['nullable', 'exists:users,id'],
             'members' => ['nullable', 'array'],
+            'members.*.nim' => ['nullable', 'string', new NimFormat],
             'student_ids' => ['nullable', 'array'],
             'emails' => ['nullable', 'array'],
         ]);

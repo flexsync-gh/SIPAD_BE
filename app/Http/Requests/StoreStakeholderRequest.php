@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\UserRole;
+use App\Rules\NimFormat;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -36,7 +37,7 @@ class StoreStakeholderRequest extends FormRequest
                 'stakeholders.*.email' => ['required', 'email', 'max:128'],
                 'stakeholders.*.role' => ['required', $roleValidator],
                 'stakeholders.*.name' => ['nullable', 'string', 'max:128'],
-                'stakeholders.*.nim' => ['nullable', 'string', 'max:50'],
+                'stakeholders.*.nim' => ['nullable', 'string', new NimFormat],
                 'stakeholders.*.is_bypass' => ['nullable', 'boolean'],
             ];
         }
@@ -45,7 +46,7 @@ class StoreStakeholderRequest extends FormRequest
             'email' => ['required', 'email', 'max:128'],
             'role' => ['required', $roleValidator],
             'name' => ['nullable', 'string', 'max:128'],
-            'nim' => ['nullable', 'string', 'max:50'],
+            'nim' => ['nullable', 'string', new NimFormat],
             'is_bypass' => ['nullable', 'boolean'],
         ];
     }

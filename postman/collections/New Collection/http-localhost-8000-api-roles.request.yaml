@@ -1,0 +1,6 @@
+$kind: http-request
+name: http://localhost:8000/api/roles
+description: ""
+url: http://localhost:8000/api/roles
+method: GET
+order: 1000

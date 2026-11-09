@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>PAD Backend - API Testing Playground (Modul B - D)</title>
+    <title>PAD Backend - API Testing Playground (Modul B - H)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -32,12 +32,14 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans" x-data="apiTester()" x-init="initApp()" x-cloak>
 
-    <!-- Top Header -->
+    <!-- Top Alert if Google OAuth Code Detected -->
     @if(isset($oauthCode) && $oauthCode)
     <div class="bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs text-emerald-800 text-center font-mono">
         Google OAuth Code terdeteksi: <strong>{{ $oauthCode }}</strong>
     </div>
     @endif
+
+    <!-- Top Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -49,14 +51,19 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <h1 class="text-base font-bold text-slate-900 leading-tight">PAD API Tester & Playground</h1>
-                            <span class="text-3xs bg-ugm-blue/10 text-ugm-blue font-bold px-2 py-0.5 rounded-full border border-ugm-blue/20">Fase 1 & 2 (Modul B - D)</span>
+                            <span class="text-3xs bg-ugm-blue/10 text-ugm-blue font-bold px-2 py-0.5 rounded-full border border-ugm-blue/20">Fase 1 — 5 (Modul B — H)</span>
                         </div>
-                        <p class="text-xs text-slate-500">Pengujian Modul B (Pengguna & Tim), Modul C (Konfigurasi & Skill), Modul D (Profiling)</p>
+                        <p class="text-xs text-slate-500">Pengujian Menyeluruh Berdasarkan Dokumen Resmi API PLAN</p>
                     </div>
                 </div>
 
                 <!-- API Prefix & Active Persona / Token Status -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Quick Seed Data Button -->
+                    <button type="button" @click="seedSampleData()" :disabled="loadingApi" class="hidden md:flex items-center gap-1.5 text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg transition shadow-xs disabled:opacity-50" title="Buat data simulasi lengkap untuk pengujian cepat">
+                        <span>⚡</span> Data Simulasi
+                    </button>
+
                     <!-- API Prefix Toggle -->
                     <div class="hidden sm:flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 text-xs">
                         <span class="text-slate-500 px-1.5 font-medium">Prefix:</span>
@@ -91,7 +98,7 @@
                                 <span>👤 Ganti Persona</span>
                                 <span class="text-3xs">▼</span>
                             </button>
-                            <div x-show="openPersona" @click.away="openPersona = false" class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 text-xs space-y-1">
+                            <div x-show="openPersona" @click.away="openPersona = false" class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 text-xs space-y-1">
                                 <div class="px-2 py-1 text-3xs font-bold text-slate-400 uppercase tracking-wider">Pilih Persona untuk Test Token:</div>
                                 <button type="button" @click="loginAsPersona('dosen.pengampu@mail.ugm.ac.id', 'lecturer', 'Dr. Dosen Pengampu, M.T.', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-purple-50 text-purple-900 flex items-center justify-between">
                                     <span>👨‍🏫 <strong>Dosen Pengampu</strong></span>
@@ -101,17 +108,21 @@
                                     <span>👑 <strong>Master Admin</strong></span>
                                     <span class="text-3xs bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-700 font-bold">Admin</span>
                                 </button>
-                                <button type="button" @click="loginAsPersona('mhs.reguler@mail.ugm.ac.id', 'student', 'Mahasiswa Reguler', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-sky-50 text-sky-900 flex items-center justify-between">
-                                    <span>🎓 <strong>Mahasiswa Reguler</strong></span>
-                                    <span class="text-3xs bg-sky-100 px-1.5 py-0.5 rounded text-sky-700 font-bold">KRS Aktif</span>
+                                <button type="button" @click="loginAsPersona('asisten.lab@mail.ugm.ac.id', 'assistant', 'Dimas Asisten Lab', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-teal-50 text-teal-900 flex items-center justify-between">
+                                    <span>🤝 <strong>Asisten Praktikum (Asprak)</strong></span>
+                                    <span class="text-3xs bg-teal-100 px-1.5 py-0.5 rounded text-teal-700 font-bold">Assistant</span>
+                                </button>
+                                <button type="button" @click="loginAsPersona('praktisi.industri@mail.ugm.ac.id', 'practitioner', 'Andi Pratama (Praktisi)', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-indigo-50 text-indigo-900 flex items-center justify-between">
+                                    <span>💼 <strong>Praktisi Industri</strong></span>
+                                    <span class="text-3xs bg-indigo-100 px-1.5 py-0.5 rounded text-indigo-700 font-bold">Practitioner</span>
+                                </button>
+                                <button type="button" @click="loginAsPersona('mhs1.pad@mail.ugm.ac.id', 'student', 'Mahasiswa Reguler (Ahmad)', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-sky-50 text-sky-900 flex items-center justify-between">
+                                    <span>🎓 <strong>Mahasiswa Reguler (KRS)</strong></span>
+                                    <span class="text-3xs bg-sky-100 px-1.5 py-0.5 rounded text-sky-700 font-bold">Student</span>
                                 </button>
                                 <button type="button" @click="loginAsPersona('mhs.gemastik@mail.ugm.ac.id', 'student', 'Mahasiswa Jalur GEMASTIK', true); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-amber-50 text-amber-900 flex items-center justify-between">
                                     <span>🚀 <strong>Mahasiswa GEMASTIK</strong></span>
                                     <span class="text-3xs bg-amber-100 px-1.5 py-0.5 rounded text-amber-800 font-bold">Bypass</span>
-                                </button>
-                                <button type="button" @click="loginAsPersona('asisten.lab@mail.ugm.ac.id', 'assistant', 'Asisten Praktikum Lab', false); openPersona = false" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-teal-50 text-teal-900 flex items-center justify-between">
-                                    <span>🤝 <strong>Asisten Praktikum</strong></span>
-                                    <span class="text-3xs bg-teal-100 px-1.5 py-0.5 rounded text-teal-700 font-bold">Assistant</span>
                                 </button>
                             </div>
                         </div>
@@ -119,30 +130,54 @@
                 </div>
             </div>
 
-            <!-- Navigation Tabs for Modul B, C, D -->
-            <nav class="flex space-x-2 border-t border-slate-100 overflow-x-auto text-xs py-1" aria-label="Tabs">
+            <!-- Navigation Tabs for Modul B through H -->
+            <nav class="flex space-x-1 border-t border-slate-100 overflow-x-auto text-xs py-1" aria-label="Tabs">
                 <!-- Modul B -->
                 <button type="button" @click="activeTab = 'modul-b'" :class="activeTab === 'modul-b' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
                     <span>👥</span>
-                    <span><strong>Modul B:</strong> Pengguna, Whitelist KRS & Tim Eksklusif</span>
+                    <span><strong>Modul B:</strong> Pengguna & Whitelist</span>
                 </button>
 
                 <!-- Modul C -->
                 <button type="button" @click="activeTab = 'modul-c'; fetchSystemSettings(); fetchMasterRoles();" :class="activeTab === 'modul-c' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
                     <span>⚙️</span>
-                    <span><strong>Modul C:</strong> Konfigurasi Sistem & Master Data Role/Skill</span>
+                    <span><strong>Modul C:</strong> Konfigurasi & Skill</span>
                 </button>
 
                 <!-- Modul D -->
                 <button type="button" @click="activeTab = 'modul-d'; fetchProfilingConfig();" :class="activeTab === 'modul-d' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
                     <span>📝</span>
-                    <span><strong>Modul D:</strong> Pendaftaran & Form Profiling Mahasiswa</span>
+                    <span><strong>Modul D:</strong> Profiling Mahasiswa</span>
+                </button>
+
+                <!-- Modul E -->
+                <button type="button" @click="activeTab = 'modul-e'; fetchEvaluations(1);" :class="activeTab === 'modul-e' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
+                    <span>⚖️</span>
+                    <span><strong>Modul E:</strong> Evaluasi Skor & Override</span>
+                </button>
+
+                <!-- Modul F -->
+                <button type="button" @click="activeTab = 'modul-f'; fetchTeams();" :class="activeTab === 'modul-f' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
+                    <span>🔀</span>
+                    <span><strong>Modul F:</strong> Auto-Grouping & Tim</span>
+                </button>
+
+                <!-- Modul G -->
+                <button type="button" @click="activeTab = 'modul-g'; fetchComplaints();" :class="activeTab === 'modul-g' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
+                    <span>📬</span>
+                    <span><strong>Modul G:</strong> Kotak Pengaduan</span>
+                </button>
+
+                <!-- Modul H -->
+                <button type="button" @click="activeTab = 'modul-h'; fetchArchivableStudents();" :class="activeTab === 'modul-h' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5">
+                    <span>📦</span>
+                    <span><strong>Modul H:</strong> Pengarsipan Mahasiswa</span>
                 </button>
 
                 <!-- Universal Console -->
                 <button type="button" @click="activeTab = 'console'" :class="activeTab === 'console' ? 'tab-active border-b-2 text-ugm-blue' : 'border-b-2 border-transparent text-slate-600 hover:text-slate-900'" class="py-2.5 px-3 whitespace-nowrap rounded-t-lg transition flex items-center gap-1.5 text-slate-500">
                     <span>⚡</span>
-                    <span>Universal Console</span>
+                    <span>Console</span>
                 </button>
             </nav>
         </div>
@@ -188,7 +223,6 @@
 
                 <!-- SUBSECTION B1: DAFTAR USERS (GET /api/users & DELETE /api/users/{id}) -->
                 <div x-show="modulBSection === 'users'" class="space-y-4">
-                    <!-- Filter & Search -->
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-800">Endpoint: <code class="text-ugm-blue font-mono font-semibold">GET /api/users</code> & <code class="text-rose-600 font-mono font-semibold">DELETE /api/users/{id}</code></span>
@@ -282,11 +316,9 @@
                                                 </template>
                                             </td>
                                             <td class="py-2 px-3 text-right space-x-1 whitespace-nowrap">
-                                                <!-- Switch Token to this user -->
                                                 <button type="button" @click="generateDevTokenForUser(u.email)" title="Ganti Token ke user ini" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-3xs font-bold transition">
                                                     🔑 Login As
                                                 </button>
-                                                <!-- Delete User -->
                                                 <button type="button" @click="deleteUser(u)" title="Hapus dari whitelist (DELETE /api/users/{id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-3xs font-bold transition">
                                                     Hapus
                                                 </button>
@@ -296,7 +328,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <!-- Pagination -->
                         <div class="px-4 py-2 border-t border-slate-100 flex items-center justify-between text-xs bg-slate-50">
                             <button type="button" :disabled="usersMeta.current_page <= 1" @click="fetchUsers(usersMeta.current_page - 1)" class="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40 transition text-2xs">
                                 &larr; Prev
@@ -322,7 +353,6 @@
                         </div>
                     </div>
 
-                    <!-- Single Form -->
                     <template x-if="lecturerFormMode === 'single'">
                         <form @submit.prevent="submitSingleLecturer()" class="space-y-3 text-xs">
                             <div>
@@ -350,7 +380,6 @@
                         </form>
                     </template>
 
-                    <!-- Batch Form -->
                     <template x-if="lecturerFormMode === 'batch'">
                         <form @submit.prevent="submitBatchLecturers()" class="space-y-3 text-xs">
                             <div class="space-y-2 max-h-56 overflow-y-auto">
@@ -418,7 +447,7 @@
                         <div x-show="manualWhitelist.user_role === 'student'" class="pt-1">
                             <label class="flex items-center gap-2 cursor-pointer bg-slate-50 p-2 rounded-lg border border-slate-200">
                                 <input type="checkbox" x-model="manualWhitelist.is_bypass" class="rounded text-ugm-blue">
-                                <span class="text-slate-700"><strong>Tandai sebagai Jalur Bypass (GEMASTIK/LIDM)</strong> — Tidak mengikuti pemilihan role ke-2 maupun pengacakan tim reguler</span>
+                                <span class="text-slate-700"><strong>Tandai sebagai Jalur Bypass (GEMASTIK/LIDM)</strong></span>
                             </label>
                         </div>
 
@@ -439,7 +468,7 @@
 
                     <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg text-xs text-blue-900 space-y-1">
                         <p class="font-semibold">Format file CSV/Excel yang didukung:</p>
-                        <p class="text-2xs">Harus memiliki kolom header: <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">email</code>, <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">nim</code>, dan <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">nama</code> (atau name). Engine akan otomatis memasukkan data ke tabel users dan inisiasi student_profiles.</p>
+                        <p class="text-2xs">Harus memiliki kolom header: <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">email</code>, <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">nim</code>, dan <code class="bg-white px-1.5 py-0.5 rounded border border-blue-300">nama</code>.</p>
                     </div>
 
                     <div class="space-y-3 text-xs">
@@ -478,7 +507,6 @@
                             </div>
                         </div>
 
-                        <!-- Anggota Tim -->
                         <div>
                             <div class="flex items-center justify-between mb-2">
                                 <label class="font-bold text-slate-700">Daftar Anggota Tim (Otomatis is_bypass = true & bound to team):</label>
@@ -521,7 +549,6 @@
             <!-- ======================================================== -->
             <div x-show="activeTab === 'modul-c'" class="space-y-6">
 
-                <!-- Modul C Header Card -->
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
                     <div>
                         <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -545,7 +572,6 @@
                     </div>
 
                     <form @submit.prevent="updateSystemSettings()" class="space-y-4 text-xs">
-                        <!-- Toggle is_role_2_required -->
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
                             <div>
                                 <span class="font-bold text-slate-900 block text-xs">Kewajiban Pilihan Role ke-2 (is_role_2_required)</span>
@@ -561,7 +587,6 @@
                             </div>
                         </div>
 
-                        <!-- Other Setting Fields -->
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block font-medium text-slate-700 mb-1">Jadwal / Timeline Pendaftaran</label>
@@ -586,7 +611,7 @@
                     </form>
                 </div>
 
-                <!-- CARD C2: MASTER DATA ROLES & SKILLSETS (GET /api/roles, POST /api/skills, PUT/DELETE /api/skills/{id}) -->
+                <!-- CARD C2: MASTER DATA ROLES & SKILLSETS -->
                 <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
                     <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
                         <div>
@@ -598,7 +623,6 @@
                         </button>
                     </div>
 
-                    <!-- 4 Roles Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <template x-for="r in masterRoles" :key="r.id">
                             <div class="bg-slate-50 rounded-xl border border-slate-200 p-3.5 space-y-2.5">
@@ -613,16 +637,13 @@
                                     <span class="text-3xs bg-white text-slate-600 px-2 py-0.5 rounded-full border border-slate-200 font-semibold" x-text="(r.skills?.length || 0) + ' skills'"></span>
                                 </div>
 
-                                <!-- Skill Items List -->
                                 <div class="flex flex-wrap gap-1.5">
                                     <template x-for="s in r.skills" :key="s.id">
                                         <div class="bg-white border border-slate-200 rounded-md px-2 py-1 text-2xs flex items-center gap-1.5 shadow-2xs group">
                                             <span class="text-slate-700" x-text="s.name"></span>
-                                            <!-- Edit Skill Inline -->
                                             <button type="button" @click="openEditSkillModal(s, r.id)" title="Ubah Nama Skill (PUT)" class="text-sky-600 hover:text-sky-800 opacity-60 group-hover:opacity-100 text-3xs font-bold">
                                                 ✎
                                             </button>
-                                            <!-- Delete Skill -->
                                             <button type="button" @click="deleteSkill(s)" title="Hapus Skill (DELETE)" class="text-rose-500 hover:text-rose-700 opacity-60 group-hover:opacity-100 text-3xs font-bold">
                                                 ✕
                                             </button>
@@ -641,7 +662,6 @@
             <!-- ======================================================== -->
             <div x-show="activeTab === 'modul-d'" class="space-y-6">
 
-                <!-- Modul D Header Card -->
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
                     <div>
                         <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -659,7 +679,7 @@
                     </div>
                 </div>
 
-                <!-- SUBSECTION D1: FORM PROFILING MAHASISWA (GET /api/student/profiling-config & POST /api/student/profile) -->
+                <!-- SUBSECTION D1: FORM PROFILING MAHASISWA -->
                 <div x-show="modulDSection === 'form'" class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
                     <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
                         <div>
@@ -671,7 +691,6 @@
                         </button>
                     </div>
 
-                    <!-- Live Config Badges -->
                     <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between text-xs flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <span class="text-slate-500 text-2xs">Status Mahasiswa:</span>
@@ -689,13 +708,11 @@
 
                     <form @submit.prevent="submitStudentProfile()" class="space-y-4 text-xs">
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <!-- NIM -->
                             <div>
                                 <label class="block font-medium text-slate-700 mb-1">NIM Mahasiswa <span class="text-rose-500">*</span></label>
                                 <input type="text" x-model="profilingForm.nim" required placeholder="21/473829/SV/19283" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
                             </div>
 
-                            <!-- Role 1 -->
                             <div>
                                 <label class="block font-medium text-slate-700 mb-1">Pilihan Role ke-1 <span class="text-rose-500">*</span></label>
                                 <select x-model="profilingForm.role_1_id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue font-bold text-ugm-blue">
@@ -706,7 +723,6 @@
                                 </select>
                             </div>
 
-                            <!-- Role 2 -->
                             <div>
                                 <label class="block font-medium text-slate-700 mb-1">
                                     Pilihan Role ke-2
@@ -725,13 +741,11 @@
                             </div>
                         </div>
 
-                        <!-- Portfolio Link -->
                         <div>
                             <label class="block font-medium text-slate-700 mb-1">Tautan Portofolio (GitHub, Behance, Figma, Drive, dsb.)</label>
                             <input type="url" x-model="profilingForm.portfolio_link" placeholder="https://github.com/username atau https://behance.net/..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
                         </div>
 
-                        <!-- Skills Checkboxes grouped by Role -->
                         <div>
                             <label class="block font-bold text-slate-800 mb-2">Checklist Keahlian / Skillset yang Dikuasai:</label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
@@ -762,7 +776,7 @@
                     </form>
                 </div>
 
-                <!-- SUBSECTION D2: PENGUMUMAN TIM SAYA (GET /api/student/my-team) -->
+                <!-- SUBSECTION D2: PENGUMUMAN TIM SAYA -->
                 <div x-show="modulDSection === 'my-team'" class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
                     <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
                         <div>
@@ -791,7 +805,6 @@
 
                     <template x-if="myTeamData.has_team && myTeamData.team">
                         <div class="space-y-4 text-xs">
-                            <!-- Team Banner -->
                             <div class="bg-slate-900 text-white p-4 rounded-xl space-y-2">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xs uppercase tracking-wider text-amber-400 font-bold" x-text="'Kelompok #' + myTeamData.team.id + ' (' + myTeamData.team.team_type + ')'"></span>
@@ -803,7 +816,6 @@
                                 </div>
                             </div>
 
-                            <!-- Teammates -->
                             <div>
                                 <h5 class="font-bold text-slate-800 mb-2">Daftar Anggota Kelompok:</h5>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -820,6 +832,505 @@
                             </div>
                         </div>
                     </template>
+                </div>
+
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- MODUL E: EVALUASI SKOR, OVERRIDE DOSEN & LOCK ROLE       -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'modul-e'" class="space-y-6">
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <span>⚖️</span> E. Modul Evaluasi Skor, Override Dosen & Penguncian Role
+                        </h2>
+                        <p class="text-xs text-slate-500">Proses 4.0 — Fase 3: Rekapitulasi evaluasi, catatan portofolio, override final role, dan penguncian role mahasiswa</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Lock All Button -->
+                        <button type="button" @click="toggleLockAllEvaluations(!isAllEvaluationsLocked)" :disabled="loadingApi" :class="isAllEvaluationsLocked ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'" class="text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-xs flex items-center gap-1.5 disabled:opacity-50">
+                            <span x-text="isAllEvaluationsLocked ? '🔓 Buka Kunci (Unlock All)' : '🔒 Lock Final Roles (Kunci Semua)'"></span>
+                        </button>
+                        <button type="button" @click="fetchEvaluations(evaluationsMeta.current_page)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-1.5 rounded-lg text-xs">
+                            🔄
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Bar -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-800">Endpoint: <code class="text-ugm-blue font-mono font-semibold">GET /api/evaluations</code></span>
+                        <span class="text-3xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">Akses: Dosen, Praktisi</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <div class="col-span-2 relative">
+                            <input type="text" x-model="evaluationFilters.search" @input.debounce.400ms="fetchEvaluations(1)" placeholder="Cari nama, email, NIM..." class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-7 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-ugm-blue">
+                            <span class="absolute left-2 top-2 text-slate-400 text-xs">🔍</span>
+                        </div>
+                        <select x-model="evaluationFilters.role" @change="fetchEvaluations(1)" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                            <option value="">Semua Final Role</option>
+                            <option value="PM">PM (Project Manager)</option>
+                            <option value="UIUX">UIUX (Designer)</option>
+                            <option value="FE">FE (Frontend)</option>
+                            <option value="BE">BE (Backend)</option>
+                        </select>
+                        <select x-model="evaluationFilters.is_overridden" @change="fetchEvaluations(1)" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                            <option value="">Status Override</option>
+                            <option value="true">Diubah Dosen (True)</option>
+                            <option value="false">Saran Asli (False)</option>
+                        </select>
+                        <select x-model="evaluationFilters.has_complaints" @change="fetchEvaluations(1)" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                            <option value="">Status Aduan</option>
+                            <option value="true">⚠️ Ada Bukti Aduan</option>
+                            <option value="false">Bersih</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Evaluations Table -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div class="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between text-xs bg-slate-50 font-medium">
+                        <span x-text="'Total: ' + (evaluationsMeta.total || 0) + ' mahasiswa terevaluasi'"></span>
+                        <span x-text="'Hal ' + (evaluationsMeta.current_page || 1) + ' / ' + (evaluationsMeta.last_page || 1)"></span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200 text-3xs">
+                                <tr>
+                                    <th class="py-2.5 px-3">Mahasiswa</th>
+                                    <th class="py-2.5 px-3">Pilihan 1 & 2</th>
+                                    <th class="py-2.5 px-3">Skor (1 / 2)</th>
+                                    <th class="py-2.5 px-3">Rekomendasi</th>
+                                    <th class="py-2.5 px-3">Posisi Final</th>
+                                    <th class="py-2.5 px-3 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-if="loadingEvaluations">
+                                    <tr>
+                                        <td colspan="6" class="py-8 text-center text-slate-400">
+                                            <div class="inline-block animate-spin mr-1">⏳</div> Memuat rekapitulasi evaluasi...
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="!loadingEvaluations && evaluationsList.length === 0">
+                                    <tr>
+                                        <td colspan="6" class="py-8 text-center text-slate-500">
+                                            Belum ada data evaluasi. Klik tombol <strong>⚡ Data Simulasi</strong> di header atas untuk membuat data otomatis.
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-for="item in evaluationsList" :key="item.user_id">
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="py-2 px-3">
+                                            <div class="font-bold text-slate-900" x-text="item.name"></div>
+                                            <div class="text-slate-500 text-2xs font-mono" x-text="item.nim || item.email"></div>
+                                            <template x-if="item.has_complaints">
+                                                <span class="inline-block mt-0.5 bg-rose-100 text-rose-800 text-3xs px-1.5 py-0.2 rounded font-bold border border-rose-300">
+                                                    ⚠️ [Ada Bukti Pengaduan]
+                                                </span>
+                                            </template>
+                                        </td>
+                                        <td class="py-2 px-3">
+                                            <div class="text-2xs font-medium">1: <strong class="text-ugm-blue" x-text="item.role_1?.code || '-'"></strong></div>
+                                            <div class="text-2xs text-slate-500">2: <span x-text="item.role_2?.code || '-'"></span></div>
+                                        </td>
+                                        <td class="py-2 px-3 font-mono text-2xs">
+                                            <span class="text-emerald-700 font-bold" x-text="item.score_role_1 ?? '-'"></span> /
+                                            <span class="text-slate-500" x-text="item.score_role_2 ?? '-'"></span>
+                                        </td>
+                                        <td class="py-2 px-3">
+                                            <div class="flex items-center gap-1">
+                                                <span class="bg-slate-100 text-slate-800 font-mono px-1.5 py-0.5 rounded text-3xs font-bold" x-text="item.recommended_role?.code || '-'"></span>
+                                                <span class="text-3xs text-slate-500" x-text="'(' + (item.recommended_score ?? '-') + ')'"></span>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="bg-ugm-blue text-white px-2 py-0.5 rounded text-3xs font-mono font-bold" x-text="item.final_role?.code || '-'"></span>
+                                                <template x-if="item.is_overridden">
+                                                    <span class="bg-amber-100 text-amber-900 border border-amber-300 text-3xs px-1.5 py-0.2 rounded font-bold">
+                                                        [Diubah oleh Dosen]
+                                                    </span>
+                                                </template>
+                                                <template x-if="item.is_locked">
+                                                    <span class="text-3xs text-rose-600 font-bold" title="Terkunci">🔒</span>
+                                                </template>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3 text-right space-x-1 whitespace-nowrap">
+                                            <!-- Detail Button -->
+                                            <button type="button" @click="openEvaluationDetail(item.user_id)" title="Detail Profil & Catatan" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-3xs font-bold transition">
+                                                Detail
+                                            </button>
+                                            <!-- Override Button -->
+                                            <button type="button" @click="openOverrideModal(item)" :disabled="item.is_locked" title="Override Final Role" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded text-3xs font-bold transition disabled:opacity-40">
+                                                Override
+                                            </button>
+                                            <!-- Reset Button -->
+                                            <button type="button" @click="resetEvaluationRole(item)" :disabled="item.is_locked || !item.is_overridden" title="Reset ke Rekomendasi" class="px-2 py-1 bg-sky-50 hover:bg-sky-100 text-sky-800 rounded text-3xs font-bold transition disabled:opacity-30">
+                                                Reset
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="px-4 py-2 border-t border-slate-100 flex items-center justify-between text-xs bg-slate-50">
+                        <button type="button" :disabled="evaluationsMeta.current_page <= 1" @click="fetchEvaluations(evaluationsMeta.current_page - 1)" class="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40 transition text-2xs">
+                            &larr; Prev
+                        </button>
+                        <span class="text-slate-500 text-2xs" x-text="'Halaman ' + (evaluationsMeta.current_page || 1) + ' / ' + (evaluationsMeta.last_page || 1)"></span>
+                        <button type="button" :disabled="evaluationsMeta.current_page >= evaluationsMeta.last_page" @click="fetchEvaluations(evaluationsMeta.current_page + 1)" class="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40 transition text-2xs">
+                            Next &rarr;
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- MODUL F: AUTO-GROUPING ENGINE & MANAJEMEN TIM           -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'modul-f'" class="space-y-6">
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <span>🔀</span> F. Modul Auto-Grouping Engine & Manajemen Proyek Tim
+                        </h2>
+                        <p class="text-xs text-slate-500">Proses 5.0 — Fase 4a: Algoritma Fisher-Yates Shuffle untuk membagi 4 posisi seimbang (PM, UIUX, FE, BE), reset grouping, penetapan Asprak & project</p>
+                    </div>
+                    <button type="button" @click="fetchTeams()" class="text-2xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
+                        🔄 Refresh Tim
+                    </button>
+                </div>
+
+                <!-- Action Card: Auto-Group & Reset Grouping -->
+                <div class="bg-slate-900 text-white p-5 rounded-xl shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm text-white">Fisher-Yates Shuffle Auto-Grouping Engine</h3>
+                            <p class="text-xs text-slate-300">Syarat: Mahasiswa reguler (non-bypass) harus memiliki final_role yang telah dikunci (is_locked = true).</p>
+                        </div>
+                        <span class="text-3xs bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded uppercase">Dosen Only</span>
+                    </div>
+
+                    <div class="pt-2 flex items-center gap-3">
+                        <button type="button" @click="runAutoGrouping()" :disabled="loadingApi" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow-sm disabled:opacity-50">
+                            <span>🚀</span> Eksekusi Auto-Grouping Engine (POST)
+                        </button>
+                        <button type="button" @click="resetGrouping()" :disabled="loadingApi" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow-sm disabled:opacity-50">
+                            <span>🔄</span> Ulangi / Reset Pembagian Tim (POST)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Teams List Display -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Daftar Kelompok Terbentuk:</h4>
+                        <span class="text-2xs text-slate-500" x-text="teamsList.length + ' kelompok ditemukan'"></span>
+                    </div>
+
+                    <template x-if="loadingTeams">
+                        <div class="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400 text-xs">
+                            <div class="inline-block animate-spin mr-1">⏳</div> Memuat data kelompok tim...
+                        </div>
+                    </template>
+
+                    <template x-if="!loadingTeams && teamsList.length === 0">
+                        <div class="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-500 text-xs space-y-2">
+                            <p>Belum ada tim yang terbentuk. Silakan klik tombol <strong>"Eksekusi Auto-Grouping Engine"</strong> di atas atau buat data simulasi.</p>
+                        </div>
+                    </template>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="t in teamsList" :key="t.id">
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-4 space-y-3">
+                                <!-- Team Header -->
+                                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-900" x-text="'Kelompok #' + t.id"></div>
+                                        <span :class="t.team_type === 'external' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'" class="text-3xs px-2 py-0.5 rounded font-mono font-bold uppercase" x-text="t.team_type || 'internal'"></span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" @click="openAssignSupervisorModal(t)" title="Tetapkan Asisten Praktikum" class="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded text-3xs font-bold transition">
+                                            Supervisor
+                                        </button>
+                                        <button type="button" @click="openProjectModal(t)" title="Kelola Metadata Proyek" class="px-2 py-1 bg-sky-50 hover:bg-sky-100 text-sky-800 rounded text-3xs font-bold transition">
+                                            Proyek
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Supervisor & Project Info -->
+                                <div class="text-2xs space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                    <div>
+                                        <span class="text-slate-500">Supervisor:</span>
+                                        <strong class="text-slate-800" x-text="t.supervisor?.name || '(Belum ditetapkan)'"></strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-500">Proyek:</span>
+                                        <strong class="text-slate-800" x-text="t.project?.project_name || '(Belum diatur)'"></strong>
+                                    </div>
+                                </div>
+
+                                <!-- Members List -->
+                                <div>
+                                    <span class="text-3xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Anggota Tim (4 Posisi):</span>
+                                    <div class="space-y-1">
+                                        <template x-for="m in (t.members || [])" :key="m.id">
+                                            <div class="flex items-center justify-between bg-white border border-slate-200 px-2 py-1 rounded text-2xs">
+                                                <div class="truncate mr-2">
+                                                    <span class="font-semibold text-slate-800" x-text="m.name"></span>
+                                                    <span class="text-3xs text-slate-400 font-mono ml-1" x-text="m.nim || ''"></span>
+                                                </div>
+                                                <span class="bg-ugm-blue text-white px-1.5 py-0.2 rounded text-3xs font-mono font-bold" x-text="m.final_role?.code || m.role || '-'"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- MODUL G: KOTAK PENGADUAN / DIGITAL COMPLAINT BOX         -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'modul-g'" class="space-y-6">
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <span>📬</span> G. Modul Kotak Pengaduan / Digital Complaint Box
+                        </h2>
+                        <p class="text-xs text-slate-500">Proses 6.0 — Fase 4b: Kirim tiket aduan anggota sekelompok + bukti (JPG/PNG/PDF), peninjauan berkas oleh Dosen/Asprak</p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" @click="modulGSection = 'list'" :class="modulGSection === 'list' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            Daftar Aduan
+                        </button>
+                        <button type="button" @click="modulGSection = 'create'" :class="modulGSection === 'create' ? 'bg-ugm-blue text-white font-bold' : 'bg-slate-100 text-slate-700'" class="text-2xs px-2.5 py-1.5 rounded-lg transition">
+                            + Buat Tiket Aduan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUBSECTION G1: DAFTAR PENGADUAN (GET /api/complaints) -->
+                <div x-show="modulGSection === 'list'" class="space-y-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between text-xs">
+                        <div>
+                            <span class="font-bold text-slate-800">Endpoint: <code class="text-ugm-blue font-mono font-semibold">GET /api/complaints</code></span>
+                            <p class="text-2xs text-slate-500">Mahasiswa hanya melihat aduannya sendiri; Asprak melihat tim bimbingannya; Dosen/Praktisi melihat seluruh tiket.</p>
+                        </div>
+                        <button type="button" @click="fetchComplaints()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs">
+                            🔄 Refresh
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200 text-3xs">
+                                <tr>
+                                    <th class="py-2.5 px-3">Tiket # & Tim</th>
+                                    <th class="py-2.5 px-3">Pelapor / Terlapor</th>
+                                    <th class="py-2.5 px-3">Deskripsi Keluhan</th>
+                                    <th class="py-2.5 px-3">Status Review</th>
+                                    <th class="py-2.5 px-3 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-if="loadingComplaints">
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-slate-400">
+                                            <div class="inline-block animate-spin mr-1">⏳</div> Memuat tiket pengaduan...
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="!loadingComplaints && complaintsList.length === 0">
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-slate-500">
+                                            Tidak ada tiket pengaduan ditemukan untuk akun login saat ini.
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-for="c in complaintsList" :key="c.id">
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="py-2 px-3">
+                                            <div class="font-mono font-bold text-slate-900" x-text="'#' + c.id"></div>
+                                            <div class="text-3xs text-slate-500" x-text="'Tim #' + c.team_id"></div>
+                                        </td>
+                                        <td class="py-2 px-3">
+                                            <div class="text-2xs text-slate-600">Oleh: <strong class="text-slate-800" x-text="c.reporter?.name || '-'"></strong></div>
+                                            <div class="text-2xs text-rose-600">Terlapor: <strong x-text="c.reported?.name || '-'"></strong></div>
+                                        </td>
+                                        <td class="py-2 px-3 max-w-xs truncate" :title="c.description" x-text="c.description"></td>
+                                        <td class="py-2 px-3">
+                                            <template x-if="c.reviewed_at">
+                                                <span class="bg-emerald-100 text-emerald-800 text-3xs px-2 py-0.5 rounded font-bold">
+                                                    ✓ Ditinjau
+                                                </span>
+                                            </template>
+                                            <template x-if="!c.reviewed_at">
+                                                <span class="bg-amber-100 text-amber-800 text-3xs px-2 py-0.5 rounded font-bold">
+                                                    Pending
+                                                </span>
+                                            </template>
+                                        </td>
+                                        <td class="py-2 px-3 text-right space-x-1 whitespace-nowrap">
+                                            <button type="button" @click="viewComplaintDetail(c.id)" title="Detail & Unduh Bukti" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-3xs font-bold transition">
+                                                Detail
+                                            </button>
+                                            <button type="button" @click="reviewComplaint(c.id)" :disabled="c.reviewed_at" title="Tandai Telah Ditinjau" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-3xs font-bold transition disabled:opacity-30">
+                                                Review
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SUBSECTION G2: FORM BUAT ADUAN (POST /api/complaints) -->
+                <div x-show="modulGSection === 'create'" class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                    <div class="border-b border-slate-200 pb-3">
+                        <h3 class="font-bold text-sm text-slate-900">Kirim Tiket Pengaduan Rekan Satu Tim</h3>
+                        <p class="text-xs text-slate-500">Endpoint: <code class="text-ugm-blue font-mono font-semibold">POST /api/complaints</code> (Akses: Mahasiswa)</p>
+                    </div>
+
+                    <form @submit.prevent="submitComplaint()" class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">User ID Mahasiswa Terlapor <span class="text-rose-500">*</span></label>
+                            <input type="number" x-model="complaintForm.reported_id" required placeholder="User ID mahasiswa yang berada dalam satu kelompok" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue">
+                            <span class="text-3xs text-slate-400">Harus berada dalam team_id yang sama dengan pelapor.</span>
+                        </div>
+
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Deskripsi Masalah / Alasan Pelaporan <span class="text-rose-500">*</span></label>
+                            <textarea x-model="complaintForm.description" required rows="3" placeholder="Jelaskan kendala, ketidakhadiran, atau ketidaksesuaian kontribusi anggota..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-ugm-blue"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block font-medium text-slate-700 mb-1">Berkas Bukti / Evidence File <span class="text-rose-500">*</span></label>
+                            <input type="file" id="complaintEvidenceFile" required accept=".jpg, .jpeg, .png, .pdf" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs">
+                            <span class="text-3xs text-slate-400">Wajib dilampirkan: format JPG, PNG, atau PDF (maksimal 10 MB).</span>
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" :disabled="loadingApi" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-lg font-bold transition text-xs shadow-xs disabled:opacity-50">
+                                Kirim Tiket Pengaduan (POST)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- MODUL H: PENGARSIPAN MAHASISWA (ARCHIVAL MANAGEMENT)    -->
+            <!-- ======================================================== -->
+            <div x-show="activeTab === 'modul-h'" class="space-y-6">
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                            <span>📦</span> H. Modul Pengarsipan Mahasiswa / Student Archival Management
+                        </h2>
+                        <p class="text-xs text-slate-500">Proses 7.0 — Fase 5: Filter mahasiswa aktif per angkatan/tahun ajaran, pengarsipan massal (Select All), dan pemulihan status</p>
+                    </div>
+                    <button type="button" @click="fetchArchivableStudents()" class="text-2xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition">
+                        🔄 Refresh Data
+                    </button>
+                </div>
+
+                <!-- Filter & Bulk Actions Bar -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-800">Endpoint: <code class="text-ugm-blue font-mono font-semibold">GET /api/students/archivable</code> & <code class="text-rose-600 font-mono font-semibold">POST /api/students/archive</code></span>
+                        <span class="text-3xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">Akses: Dosen</span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2 items-center justify-between">
+                        <div class="flex gap-2 flex-1 w-full">
+                            <input type="text" x-model="archivalFilters.search" @input.debounce.400ms="fetchArchivableStudents()" placeholder="Cari nama, email, NIM..." class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs flex-1">
+                            <input type="text" x-model="archivalFilters.angkatan" @input.debounce.400ms="fetchArchivableStudents()" placeholder="Filter Angkatan (misal: 21, 22)..." class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-48">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="selectAllArchivable()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium text-2xs">
+                                Select All
+                            </button>
+                            <button type="button" @click="selectedArchivalUserIds = []" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium text-2xs">
+                                Clear
+                            </button>
+                            <button type="button" @click="submitArchiveStudents()" :disabled="selectedArchivalUserIds.length === 0 || loadingApi" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg font-bold transition shadow-xs disabled:opacity-40 text-2xs">
+                                📦 Arsipkan Terpilih (<span x-text="selectedArchivalUserIds.length"></span>)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Archivable Table -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200 text-3xs">
+                            <tr>
+                                <th class="py-2.5 px-3 w-8">Pilih</th>
+                                <th class="py-2.5 px-3">Mahasiswa</th>
+                                <th class="py-2.5 px-3">NIM / Angkatan</th>
+                                <th class="py-2.5 px-3">Role Final</th>
+                                <th class="py-2.5 px-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <template x-if="loadingArchivable">
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-slate-400">
+                                        <div class="inline-block animate-spin mr-1">⏳</div> Memuat daftar mahasiswa aktif...
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-if="!loadingArchivable && archivableList.length === 0">
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-slate-500">
+                                        Tidak ada mahasiswa aktif yang siap diarsipkan.
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-for="st in archivableList" :key="st.user_id">
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="py-2 px-3">
+                                        <input type="checkbox" :value="st.user_id" x-model="selectedArchivalUserIds" class="rounded text-ugm-blue">
+                                    </td>
+                                    <td class="py-2 px-3">
+                                        <div class="font-bold text-slate-900" x-text="st.name"></div>
+                                        <div class="text-3xs text-slate-500 font-mono" x-text="st.email"></div>
+                                    </td>
+                                    <td class="py-2 px-3">
+                                        <div class="font-mono text-2xs" x-text="st.nim || '-'"></div>
+                                        <div class="text-3xs text-slate-400" x-text="st.angkatan ? 'Angkatan ' + st.angkatan : ''"></div>
+                                    </td>
+                                    <td class="py-2 px-3">
+                                        <span class="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-3xs font-mono font-bold" x-text="st.final_role?.code || '-'"></span>
+                                    </td>
+                                    <td class="py-2 px-3">
+                                        <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-3xs font-medium" x-text="st.status"></span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
                 </div>
 
             </div>
@@ -949,7 +1460,7 @@
     </main>
 
     <!-- ======================================================== -->
-    <!-- MODALS: Add Skill & Edit Skill                           -->
+    <!-- MODALS: Add Skill, Edit Skill, Eval Detail, Override, etc.-->
     <!-- ======================================================== -->
 
     <!-- Modal: Tambah Skill (POST /api/skills) -->
@@ -1024,6 +1535,206 @@
         </div>
     </div>
 
+    <!-- Modal: Detail Evaluasi Profil Mahasiswa (GET /api/evaluations/{userId} & PATCH /note) -->
+    <div x-show="showEvaluationDetailModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden" @click.away="showEvaluationDetailModal = false">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Rincian Profil & Evaluasi Mahasiswa</h3>
+                    <p class="text-xs text-slate-500 font-mono" x-text="evalDetailData.student?.name + ' (' + (evalDetailData.student?.nim || evalDetailData.student?.email) + ')'"></p>
+                </div>
+                <button type="button" @click="showEvaluationDetailModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+            </div>
+
+            <div class="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+                <!-- Portofolio Link -->
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span class="text-slate-500 block text-2xs">Tautan Portofolio:</span>
+                        <template x-if="evalDetailData.student?.portfolio_link">
+                            <a :href="evalDetailData.student.portfolio_link" target="_blank" class="text-ugm-blue font-bold hover:underline flex items-center gap-1" x-text="evalDetailData.student.portfolio_link"></a>
+                        </template>
+                        <template x-if="!evalDetailData.student?.portfolio_link">
+                            <span class="text-slate-400 italic">Tidak mencantumkan portofolio</span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Skills Breakdown by Role -->
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-2">Checklist Keahlian per Role:</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <template x-for="rGroup in (evalDetailData.skills_by_role || [])" :key="rGroup.role_id">
+                            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1.5">
+                                <div class="flex items-center justify-between border-b border-slate-200 pb-1">
+                                    <span class="font-bold text-slate-800" x-text="rGroup.role_code + ' - ' + rGroup.role_name"></span>
+                                    <span class="text-3xs text-ugm-blue font-bold font-mono" x-text="rGroup.checked_count + ' / ' + rGroup.total_skills"></span>
+                                </div>
+                                <div class="space-y-1">
+                                    <template x-for="sk in rGroup.skills" :key="sk.id">
+                                        <div class="flex items-center gap-1.5 text-2xs">
+                                            <span :class="sk.is_checked ? 'text-emerald-600 font-bold' : 'text-slate-300'">✓</span>
+                                            <span :class="sk.is_checked ? 'text-slate-900 font-medium' : 'text-slate-400'" x-text="sk.name"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Evaluation Note Form -->
+                <form @submit.prevent="submitEvaluationNote()" class="space-y-2 border-t border-slate-100 pt-3">
+                    <label class="block font-bold text-slate-800">Catatan Evaluasi / Rekomendasi Portofolio (Dosen / Praktisi):</label>
+                    <textarea x-model="evalNoteInput" rows="2" placeholder="Tuliskan catatan evaluasi terhadap portofolio mahasiswa ini..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-ugm-blue"></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="loadingApi" class="bg-ugm-blue hover:bg-ugm-dark text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-xs disabled:opacity-50">
+                            Simpan Catatan (PATCH)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Override Role (PATCH /api/evaluations/{userId}/override) -->
+    <div x-show="showOverrideModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showOverrideModal = false">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Modal Konfirmasi Interupsi (Override)</h3>
+                    <p class="text-xs text-slate-500 font-mono" x-text="overrideTarget.name"></p>
+                </div>
+                <button type="button" @click="showOverrideModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+            </div>
+
+            <form @submit.prevent="submitOverrideRole()" class="p-5 space-y-4 text-xs">
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-amber-900 text-2xs space-y-1">
+                    <p class="font-bold">⚠️ Perhatian Interupsi Peran:</p>
+                    <p>Mengubah peran final secara manual akan memberi label <strong class="text-amber-950">[Diubah oleh Dosen]</strong> dan mencatat nama akun dosen yang melakukan interupsi.</p>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Pilih Final Role Baru <span class="text-rose-500">*</span></label>
+                    <select x-model="overrideTarget.final_role_id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-ugm-blue">
+                        <template x-for="r in masterRoles" :key="r.id">
+                            <option :value="r.id" x-text="r.code + ' - ' + r.name"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" @click="showOverrideModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
+                        Batal
+                    </button>
+                    <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg font-bold transition shadow-xs disabled:opacity-50">
+                        Konfirmasi Override (PATCH)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Assign Supervisor (PATCH /api/teams/{teamId}/supervisor) -->
+    <div x-show="showAssignSupervisorModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showAssignSupervisorModal = false">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Tetapkan Asisten Praktikum (Supervisor)</h3>
+                    <p class="text-xs text-slate-500 font-mono" x-text="'Kelompok #' + supervisorTarget.team_id"></p>
+                </div>
+                <button type="button" @click="showAssignSupervisorModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+            </div>
+
+            <form @submit.prevent="submitAssignSupervisor()" class="p-5 space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">User ID Asisten Praktikum / Dosen <span class="text-rose-500">*</span></label>
+                    <input type="number" x-model="supervisorTarget.supervisor_id" required placeholder="User ID supervisor" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                </div>
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" @click="showAssignSupervisorModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
+                        Batal
+                    </button>
+                    <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-bold transition shadow-xs disabled:opacity-50">
+                        Tetapkan Supervisor (PATCH)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Project Metadata (POST /api/teams/{teamId}/project) -->
+    <div x-show="showProjectModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showProjectModal = false">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Metadata Proyek Kelompok</h3>
+                    <p class="text-xs text-slate-500 font-mono" x-text="'Kelompok #' + projectTarget.team_id"></p>
+                </div>
+                <button type="button" @click="showProjectModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+            </div>
+
+            <form @submit.prevent="submitProjectMetadata()" class="p-5 space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Nama Proyek <span class="text-rose-500">*</span></label>
+                    <input type="text" x-model="projectTarget.project_name" required placeholder="Sistem Informasi..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Mitra / Associate</label>
+                    <input type="text" x-model="projectTarget.project_associate" placeholder="PT Teknologi Nusantara" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Deskripsi Proyek</label>
+                    <textarea x-model="projectTarget.project_description" rows="2" placeholder="Deskripsi ringkas proyek..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs"></textarea>
+                </div>
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" @click="showProjectModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">
+                        Batal
+                    </button>
+                    <button type="submit" :disabled="loadingApi" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold transition shadow-xs disabled:opacity-50">
+                        Simpan Proyek (POST)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Detail Aduan & Unduh Bukti (GET /api/complaints/{id}) -->
+    <div x-show="showComplaintDetailModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden" @click.away="showComplaintDetailModal = false">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Detail Tiket Pengaduan</h3>
+                    <p class="text-xs text-slate-500 font-mono" x-text="'Tiket #' + complaintDetailData.id"></p>
+                </div>
+                <button type="button" @click="showComplaintDetailModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+            </div>
+
+            <div class="p-5 space-y-3 text-xs">
+                <div>
+                    <span class="text-slate-500 block text-2xs">Pelapor:</span>
+                    <strong class="text-slate-900" x-text="complaintDetailData.reporter?.name + ' (' + complaintDetailData.reporter?.email + ')'"></strong>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-2xs">Mahasiswa Terlapor:</span>
+                    <strong class="text-rose-600" x-text="complaintDetailData.reported?.name + ' (' + complaintDetailData.reported?.email + ')'"></strong>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <span class="text-slate-500 block text-2xs mb-1">Deskripsi Keluhan:</span>
+                    <p class="text-slate-800" x-text="complaintDetailData.description"></p>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <a :href="apiPrefix + '/complaints/' + complaintDetailData.id + '/download?download=1'" target="_blank" class="bg-ugm-blue hover:bg-ugm-dark text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        <span>📥</span> Unduh Berkas Bukti
+                    </a>
+                    <button type="button" @click="showComplaintDetailModal = false" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div x-show="toast.show" x-transition class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 flex items-center gap-2">
         <span x-text="toast.message"></span>
@@ -1065,19 +1776,13 @@
                 usersMeta: { current_page: 1, last_page: 1, total: 0, per_page: 15 },
                 userFilters: { search: '', user_role: '', status: '', is_bypass: '', per_page: 15 },
                 loadingUsers: false,
-
-                // B2: Inisiasi Dosen
                 lecturerFormMode: 'single',
                 singleLecturer: { email: '', name: '', role: 'admin' },
                 batchLecturers: [
                     { email: 'dosen.koordinator@mail.ugm.ac.id', name: 'Dr. Dosen Koordinator', role: 'admin' },
                     { email: 'dosen.anggota@mail.ugm.ac.id', name: 'Ir. Dosen Anggota, Ph.D.', role: 'lecturer' }
                 ],
-
-                // B3: Manual Whitelist
                 manualWhitelist: { email: '', user_role: 'student', name: '', nim: '', is_bypass: false },
-
-                // B5: Exclusive Team
                 exclusiveTeam: {
                     team_name: 'GEMASTIK Software Team ' + Math.floor(Math.random() * 900 + 100),
                     project_name: 'Smart Vision Platform',
@@ -1104,23 +1809,50 @@
                 // MODUL D STATE
                 modulDSection: 'form',
                 profilingConfigData: { is_bypass: false, is_role_2_required: false, is_locked: false },
-                profilingForm: {
-                    nim: '',
-                    role_1_id: '',
-                    role_2_id: '',
-                    portfolio_link: '',
-                    skill_ids: []
-                },
+                profilingForm: { nim: '', role_1_id: '', role_2_id: '', portfolio_link: '', skill_ids: [] },
                 myTeamData: { has_team: false, final_role: null, team: null },
 
-                // Console
+                // MODUL E STATE
+                evaluationsList: [],
+                evaluationsMeta: { current_page: 1, last_page: 1, total: 0 },
+                evaluationFilters: { search: '', role: '', is_overridden: '', is_locked: '', has_complaints: '' },
+                loadingEvaluations: false,
+                isAllEvaluationsLocked: false,
+                showEvaluationDetailModal: false,
+                evalDetailData: {},
+                evalNoteInput: '',
+                showOverrideModal: false,
+                overrideTarget: { user_id: null, name: '', final_role_id: 1 },
+
+                // MODUL F STATE
+                teamsList: [],
+                loadingTeams: false,
+                showAssignSupervisorModal: false,
+                supervisorTarget: { team_id: null, supervisor_id: '' },
+                showProjectModal: false,
+                projectTarget: { team_id: null, project_name: '', project_associate: '', project_description: '' },
+
+                // MODUL G STATE
+                modulGSection: 'list',
+                complaintsList: [],
+                loadingComplaints: false,
+                complaintForm: { reported_id: '', description: '' },
+                showComplaintDetailModal: false,
+                complaintDetailData: {},
+
+                // MODUL H STATE
+                archivableList: [],
+                loadingArchivable: false,
+                archivalFilters: { search: '', angkatan: '' },
+                selectedArchivalUserIds: [],
+
+                // Universal Console
                 consoleReq: { method: 'GET', path: '/users', useAuth: true, body: '' },
 
                 initApp() {
                     if (this.bearerToken) {
                         this.fetchActiveProfile();
                     } else {
-                        // Auto-login as default Dosen for smooth experience
                         this.loginAsPersona('dosen.pengampu@mail.ugm.ac.id', 'lecturer', 'Dr. Dosen Pengampu, M.T.', false);
                     }
                     this.fetchUsers(1);
@@ -1128,7 +1860,6 @@
                     this.fetchMasterRoles();
                 },
 
-                // Headers
                 getHeaders(includeAuth = true) {
                     const headers = {
                         'Accept': 'application/json',
@@ -1141,7 +1872,6 @@
                     return headers;
                 },
 
-                // Base Make Request
                 async makeRequest(method, endpoint, body = null, isFormData = false) {
                     this.loadingApi = true;
                     const startTime = performance.now();
@@ -1206,7 +1936,6 @@
                     }
                 },
 
-                // Persona switcher
                 async loginAsPersona(email, role, name, isBypass = false) {
                     try {
                         const res = await fetch('/dev/generate-token', {
@@ -1225,12 +1954,28 @@
                             this.setToken(data.token);
                             this.activeUser = data.user;
                             this.showToast('Login sebagai ' + name + ' (' + role + ')');
-                            if (this.activeTab === 'modul-d') {
-                                this.fetchProfilingConfig();
-                            }
+                            if (this.activeTab === 'modul-d') this.fetchProfilingConfig();
+                            if (this.activeTab === 'modul-g') this.fetchComplaints();
                         }
                     } catch (e) {
                         this.showToast('Error persona: ' + e.message);
+                    }
+                },
+
+                async seedSampleData() {
+                    try {
+                        const { res, data } = await this.makeRequest('POST', '/dev/seed-sample-data');
+                        if (res && res.ok) {
+                            this.showToast(data.message || 'Data simulasi lengkap berhasil dibuat!');
+                            this.fetchUsers(1);
+                            this.fetchMasterRoles();
+                            this.fetchEvaluations(1);
+                            this.fetchTeams();
+                            this.fetchComplaints();
+                            this.fetchArchivableStudents();
+                        }
+                    } catch (e) {
+                        this.showToast('Error seed: ' + e.message);
                     }
                 },
 
@@ -1279,7 +2024,6 @@
 
                 async deleteUser(user) {
                     if (!confirm(`Hapus pengguna "${user.name || user.email}" dari whitelist?`)) return;
-
                     const { res, data } = await this.makeRequest('DELETE', this.apiPrefix + '/users/' + user.id);
                     if (res && res.ok) {
                         this.showToast('Pengguna berhasil dihapus dari whitelist!');
@@ -1441,7 +2185,6 @@
 
                 async deleteSkill(skill) {
                     if (!confirm(`Hapus skill "${skill.name}"?`)) return;
-
                     const { res, data } = await this.makeRequest('DELETE', this.apiPrefix + '/skills/' + skill.id);
                     if (res && res.ok) {
                         this.showToast('Skill berhasil dihapus!');
@@ -1458,9 +2201,7 @@
                     const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/student/profiling-config');
                     if (res && res.ok && data?.data) {
                         this.profilingConfigData = data.data.config || {};
-                        if (data.data.roles) {
-                            this.masterRoles = data.data.roles;
-                        }
+                        if (data.data.roles) this.masterRoles = data.data.roles;
                         if (data.data.current_profile) {
                             const cp = data.data.current_profile;
                             this.profilingForm.nim = cp.nim || this.profilingForm.nim;
@@ -1503,6 +2244,270 @@
                 },
 
                 // ==========================================
+                // MODUL E FUNCTIONS
+                // ==========================================
+                async fetchEvaluations(page = 1) {
+                    this.loadingEvaluations = true;
+                    let url = this.apiPrefix + '/evaluations?page=' + page;
+                    if (this.evaluationFilters.search) url += '&search=' + encodeURIComponent(this.evaluationFilters.search);
+                    if (this.evaluationFilters.role) url += '&role=' + encodeURIComponent(this.evaluationFilters.role);
+                    if (this.evaluationFilters.is_overridden) url += '&is_overridden=' + encodeURIComponent(this.evaluationFilters.is_overridden);
+                    if (this.evaluationFilters.is_locked) url += '&is_locked=' + encodeURIComponent(this.evaluationFilters.is_locked);
+                    if (this.evaluationFilters.has_complaints) url += '&has_complaints=' + encodeURIComponent(this.evaluationFilters.has_complaints);
+
+                    const { res, data } = await this.makeRequest('GET', url);
+                    this.loadingEvaluations = false;
+                    if (res && res.ok && data) {
+                        this.evaluationsList = data.data || [];
+                        this.evaluationsMeta = data.meta || { current_page: 1, last_page: 1, total: this.evaluationsList.length };
+                        // Check if all are locked
+                        this.isAllEvaluationsLocked = this.evaluationsList.length > 0 && this.evaluationsList.every(i => i.is_locked);
+                    }
+                },
+
+                async openEvaluationDetail(userId) {
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/evaluations/' + userId);
+                    if (res && res.ok && data?.data) {
+                        this.evalDetailData = data.data;
+                        this.evalNoteInput = data.data.evaluation?.evaluation_note || '';
+                        this.showEvaluationDetailModal = true;
+                    } else {
+                        this.showToast('Gagal mengambil detail evaluasi: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async submitEvaluationNote() {
+                    const userId = this.evalDetailData.student?.user_id;
+                    const { res, data } = await this.makeRequest('PATCH', this.apiPrefix + '/evaluations/' + userId + '/note', {
+                        evaluation_note: this.evalNoteInput
+                    });
+                    if (res && res.ok) {
+                        this.showToast('Catatan evaluasi portofolio berhasil disimpan!');
+                        this.showEvaluationDetailModal = false;
+                        this.fetchEvaluations(this.evaluationsMeta.current_page);
+                    } else {
+                        this.showToast('Gagal simpan note: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                openOverrideModal(item) {
+                    this.overrideTarget = {
+                        user_id: item.user_id,
+                        name: item.name,
+                        final_role_id: item.final_role_id || item.recommended_role_id || 1
+                    };
+                    this.showOverrideModal = true;
+                },
+
+                async submitOverrideRole() {
+                    const { res, data } = await this.makeRequest('PATCH', this.apiPrefix + '/evaluations/' + this.overrideTarget.user_id + '/override', {
+                        final_role_id: parseInt(this.overrideTarget.final_role_id)
+                    });
+                    if (res && res.ok) {
+                        this.showToast('Final role berhasil diubah (override) oleh dosen!');
+                        this.showOverrideModal = false;
+                        this.fetchEvaluations(this.evaluationsMeta.current_page);
+                    } else {
+                        this.showToast('Gagal override: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async resetEvaluationRole(item) {
+                    if (!confirm(`Kembalikan posisi final "${item.name}" ke saran awal sistem?`)) return;
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/evaluations/' + item.user_id + '/reset');
+                    if (res && res.ok) {
+                        this.showToast('Posisi final berhasil dikembalikan ke saran awal sistem!');
+                        this.fetchEvaluations(this.evaluationsMeta.current_page);
+                    } else {
+                        this.showToast('Gagal reset: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async toggleLockAllEvaluations(lockState) {
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/evaluations/lock-all', {
+                        is_locked: lockState
+                    });
+                    if (res && res.ok) {
+                        this.showToast(data?.message || 'Status kuncian evaluasi berhasil diubah!');
+                        this.fetchEvaluations(this.evaluationsMeta.current_page);
+                    } else {
+                        this.showToast('Gagal lock: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                // ==========================================
+                // MODUL F FUNCTIONS
+                // ==========================================
+                async fetchTeams() {
+                    this.loadingTeams = true;
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/teams');
+                    this.loadingTeams = false;
+                    if (res && res.ok && data) {
+                        this.teamsList = data.data || [];
+                    }
+                },
+
+                async runAutoGrouping() {
+                    if (!confirm('Eksekusi Fisher-Yates Auto-Grouping Engine untuk membagi tim 4 posisi seimbang?')) return;
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/teams/auto-group');
+                    if (res && res.ok) {
+                        this.showToast(data?.message || 'Auto-Grouping berhasil membentuk tim!');
+                        this.fetchTeams();
+                    } else {
+                        this.showToast('Gagal grouping: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async resetGrouping() {
+                    if (!confirm('Apakah Anda yakin ingin mereset pembagian tim reguler?')) return;
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/teams/reset-grouping');
+                    if (res && res.ok) {
+                        this.showToast(data?.message || 'Pembagian tim berhasil direset!');
+                        this.fetchTeams();
+                    } else {
+                        this.showToast('Gagal reset: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                openAssignSupervisorModal(team) {
+                    this.supervisorTarget = {
+                        team_id: team.id,
+                        supervisor_id: team.supervisor?.id || ''
+                    };
+                    this.showAssignSupervisorModal = true;
+                },
+
+                async submitAssignSupervisor() {
+                    const { res, data } = await this.makeRequest('PATCH', this.apiPrefix + '/teams/' + this.supervisorTarget.team_id + '/supervisor', {
+                        supervisor_id: parseInt(this.supervisorTarget.supervisor_id)
+                    });
+                    if (res && res.ok) {
+                        this.showToast('Supervisor berhasil ditetapkan ke kelompok!');
+                        this.showAssignSupervisorModal = false;
+                        this.fetchTeams();
+                    } else {
+                        this.showToast('Gagal assign: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                openProjectModal(team) {
+                    this.projectTarget = {
+                        team_id: team.id,
+                        project_name: team.project?.project_name || '',
+                        project_associate: team.project?.project_associate || '',
+                        project_description: team.project?.project_description || ''
+                    };
+                    this.showProjectModal = true;
+                },
+
+                async submitProjectMetadata() {
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/teams/' + this.projectTarget.team_id + '/project', {
+                        project_name: this.projectTarget.project_name,
+                        project_associate: this.projectTarget.project_associate,
+                        project_description: this.projectTarget.project_description
+                    });
+                    if (res && res.ok) {
+                        this.showToast('Metadata proyek berhasil disimpan!');
+                        this.showProjectModal = false;
+                        this.fetchTeams();
+                    } else {
+                        this.showToast('Gagal simpan proyek: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                // ==========================================
+                // MODUL G FUNCTIONS
+                // ==========================================
+                async fetchComplaints() {
+                    this.loadingComplaints = true;
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/complaints');
+                    this.loadingComplaints = false;
+                    if (res && res.ok && data) {
+                        this.complaintsList = data.data || [];
+                    }
+                },
+
+                async submitComplaint() {
+                    const fileInput = document.getElementById('complaintEvidenceFile');
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        this.showToast('Lampirkan berkas bukti (file JPG/PNG/PDF)!');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('reported_id', this.complaintForm.reported_id);
+                    formData.append('description', this.complaintForm.description);
+                    formData.append('evidence_file', fileInput.files[0]);
+
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/complaints', formData, true);
+                    if (res && (res.status === 201 || res.status === 200)) {
+                        this.showToast('Tiket pengaduan anggota tim berhasil dikirim!');
+                        this.complaintForm = { reported_id: '', description: '' };
+                        fileInput.value = '';
+                        this.modulGSection = 'list';
+                        this.fetchComplaints();
+                    } else {
+                        this.showToast('Gagal kirim aduan: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async viewComplaintDetail(complaintId) {
+                    const { res, data } = await this.makeRequest('GET', this.apiPrefix + '/complaints/' + complaintId);
+                    if (res && res.ok && data?.data) {
+                        this.complaintDetailData = data.data;
+                        this.showComplaintDetailModal = true;
+                    } else {
+                        this.showToast('Gagal melihat tiket aduan: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                async reviewComplaint(complaintId) {
+                    const { res, data } = await this.makeRequest('PATCH', this.apiPrefix + '/complaints/' + complaintId + '/review');
+                    if (res && res.ok) {
+                        this.showToast('Laporan pengaduan telah ditandai ditinjau!');
+                        this.fetchComplaints();
+                    } else {
+                        this.showToast('Gagal review aduan: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                // ==========================================
+                // MODUL H FUNCTIONS
+                // ==========================================
+                async fetchArchivableStudents() {
+                    this.loadingArchivable = true;
+                    let url = this.apiPrefix + '/students/archivable?';
+                    if (this.archivalFilters.search) url += '&search=' + encodeURIComponent(this.archivalFilters.search);
+                    if (this.archivalFilters.angkatan) url += '&angkatan=' + encodeURIComponent(this.archivalFilters.angkatan);
+
+                    const { res, data } = await this.makeRequest('GET', url);
+                    this.loadingArchivable = false;
+                    if (res && res.ok && data) {
+                        this.archivableList = data.data || [];
+                    }
+                },
+
+                selectAllArchivable() {
+                    this.selectedArchivalUserIds = this.archivableList.map(s => s.user_id);
+                },
+
+                async submitArchiveStudents() {
+                    if (!confirm(`Arsipkan ${this.selectedArchivalUserIds.length} mahasiswa terpilih?`)) return;
+
+                    const { res, data } = await this.makeRequest('POST', this.apiPrefix + '/students/archive', {
+                        user_ids: this.selectedArchivalUserIds
+                    });
+                    if (res && res.ok) {
+                        this.showToast(data?.message || 'Mahasiswa berhasil diarsipkan!');
+                        this.selectedArchivalUserIds = [];
+                        this.fetchArchivableStudents();
+                        this.fetchUsers(1);
+                    } else {
+                        this.showToast('Gagal arsip: ' + (data?.message || 'Error'));
+                    }
+                },
+
+                // ==========================================
                 // UNIVERSAL CONSOLE
                 // ==========================================
                 async executeConsoleRequest() {
@@ -1525,7 +2530,7 @@
                         case 'lecturer': return 'bg-purple-100 text-purple-800 border border-purple-300';
                         case 'student': return 'bg-sky-100 text-sky-800 border border-sky-300';
                         case 'assistant': return 'bg-teal-100 text-teal-800 border border-teal-300';
-                        case 'practitioner': return 'bg-amber-100 text-amber-800 border border-amber-300';
+                        case 'practitioner': return 'bg-indigo-100 text-indigo-800 border border-indigo-300';
                         default: return 'bg-slate-100 text-slate-700';
                     }
                 },
